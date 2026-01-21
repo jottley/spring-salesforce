@@ -15,51 +15,67 @@
  */
 package org.springframework.social.salesforce.connect;
 
-import org.springframework.social.connect.support.OAuth2ConnectionFactory;
 import org.springframework.social.salesforce.api.Salesforce;
 
 /**
+ * Salesforce Connection Factory for creating Salesforce API connections.
+ *
  * @author Umut Utkan
  * @author Jared Ottley
  */
-public class SalesforceConnectionFactory extends OAuth2ConnectionFactory<Salesforce> {
+public class SalesforceConnectionFactory {
+
+    private SalesforceServiceProvider serviceProvider;
+    private SalesforceProfileMapper profileMapper;
 
     public SalesforceConnectionFactory(String clientId, String clientSecret) {
-        super(SalesforceServiceProvider.ID, new SalesforceServiceProvider(clientId, clientSecret),
-                new SalesforceAdapter());
+        this.serviceProvider = new SalesforceServiceProvider(clientId, clientSecret);
+        this.profileMapper = new SalesforceProfileMapper();
     }
     
     public SalesforceConnectionFactory(String clientId, String clientSecret, boolean sandbox) {
-        super(SalesforceServiceProvider.ID, new SalesforceServiceProvider(clientId, clientSecret, sandbox),
-                sandbox ? new SalesforceAdapter(sandbox) : new SalesforceAdapter());
+        this.serviceProvider = new SalesforceServiceProvider(clientId, clientSecret, sandbox);
+        this.profileMapper = new SalesforceProfileMapper(sandbox);
     }
 
     public SalesforceConnectionFactory(String clientId, String clientSecret, String instanceUrl) {
-        super(SalesforceServiceProvider.ID, new SalesforceServiceProvider(clientId, clientSecret),
-              new SalesforceAdapter(instanceUrl));
+        this.serviceProvider = new SalesforceServiceProvider(clientId, clientSecret);
+        this.profileMapper = new SalesforceProfileMapper(instanceUrl);
     }
     
     public SalesforceConnectionFactory(String clientId, String clientSecret, String instanceUrl, boolean sandbox) {
-        super(SalesforceServiceProvider.ID, new SalesforceServiceProvider(clientId, clientSecret, sandbox),
-              sandbox ? new SalesforceAdapter(instanceUrl, sandbox) : new SalesforceAdapter(instanceUrl));
+        this.serviceProvider = new SalesforceServiceProvider(clientId, clientSecret, sandbox);
+        this.profileMapper = new SalesforceProfileMapper(instanceUrl, sandbox);
     }
 
     @Deprecated
     public SalesforceConnectionFactory(String clientId, String clientSecret, String authorizeUrl, String tokenUrl) {
-        super(SalesforceServiceProvider.ID, new SalesforceServiceProvider(clientId, clientSecret,
-                authorizeUrl, tokenUrl), new SalesforceAdapter());
+        this.serviceProvider = new SalesforceServiceProvider(clientId, clientSecret, authorizeUrl, tokenUrl);
+        this.profileMapper = new SalesforceProfileMapper();
     }
 
     @Deprecated
     public SalesforceConnectionFactory(String clientId, String clientSecret, String authorizeUrl, String tokenUrl, String instanceUrl) {
-        super(SalesforceServiceProvider.ID, new SalesforceServiceProvider(clientId, clientSecret,
-                                                          authorizeUrl, tokenUrl), new SalesforceAdapter(instanceUrl));
+        this.serviceProvider = new SalesforceServiceProvider(clientId, clientSecret, authorizeUrl, tokenUrl);
+        this.profileMapper = new SalesforceProfileMapper(instanceUrl);
     }
     
     @Deprecated
     public SalesforceConnectionFactory(String clientId, String clientSecret, String authorizeUrl, String tokenUrl, String instanceUrl, String gatewayUrl) {
-        super("salesforce", new SalesforceServiceProvider(clientId, clientSecret,
-                                                          authorizeUrl, tokenUrl), new SalesforceAdapter(instanceUrl, gatewayUrl));
+        this.serviceProvider = new SalesforceServiceProvider(clientId, clientSecret, authorizeUrl, tokenUrl);
+        this.profileMapper = new SalesforceProfileMapper(instanceUrl, gatewayUrl);
+    }
+
+    public SalesforceServiceProvider getServiceProvider() {
+        return serviceProvider;
+    }
+
+    public SalesforceProfileMapper getProfileMapper() {
+        return profileMapper;
+    }
+
+    public Salesforce createApi(String accessToken) {
+        return serviceProvider.getApi(accessToken);
     }
 
 }

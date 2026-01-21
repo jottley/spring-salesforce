@@ -23,11 +23,10 @@ import java.util.Objects;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
+import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.social.oauth2.AbstractOAuth2ApiBinding;
-import org.springframework.social.oauth2.OAuth2Version;
 import org.springframework.social.salesforce.api.ApiOperations;
 import org.springframework.social.salesforce.api.ChatterOperations;
 import org.springframework.social.salesforce.api.ConnectOperations;
@@ -54,15 +53,17 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
  * @author Umut Utkan
  * @author Jared Ottley
  */
-public class SalesforceTemplate extends AbstractOAuth2ApiBinding implements Salesforce {
+public class SalesforceTemplate implements Salesforce {
 
 	private static final String INSTANCE_URL = "https://na1.salesforce.com";
 	private static final String GATEWAY_URL  = "https://login.salesforce.com";
 
 	private String instanceUrl;
 	private String gatewayUrl;
+	private String accessToken;
 
 	private ObjectMapper objectMapper;
+	private RestTemplate restTemplate;
 
 	private ApiOperations apiOperations;
 
@@ -86,23 +87,53 @@ public class SalesforceTemplate extends AbstractOAuth2ApiBinding implements Sale
 
 	public SalesforceTemplate()
 	{
+		this.accessToken = null;
+		initializeRestTemplate();
 		initialize();
 	}
 
 
 	public SalesforceTemplate(String accessToken)
 	{
-		super(accessToken);
+		this.accessToken = accessToken;
+		initializeRestTemplate();
 		initialize();
 	}
 
-
-	@Override
-	protected OAuth2Version getOAuth2Version()
-	{
-		return OAuth2Version.DRAFT_10;
+	/**
+	 * Initialize the RestTemplate with OAuth2 support
+	 */
+	private void initializeRestTemplate() {
+		this.restTemplate = new RestTemplate();
+		
+		// Set up message converters
+		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
+		messageConverters.add(new StringHttpMessageConverter());
+		messageConverters.add(new FormHttpMessageConverter());
+		messageConverters.add(this.getJsonMessageConverter());
+		messageConverters.add(this.getByteArrayMessageConverter());
+		restTemplate.setMessageConverters(messageConverters);
+		
+		// Set error handler
+		restTemplate.setErrorHandler(new SalesforceErrorHandler());
+		
+		// Add OAuth2 bearer token interceptor if access token is present
+		if (accessToken != null && !accessToken.isEmpty()) {
+			List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
+			interceptors.add((request, body, execution) -> {
+				request.getHeaders().setBearerAuth(accessToken);
+				return execution.execute(request, body);
+			});
+			restTemplate.setInterceptors(interceptors);
+		}
 	}
 
+	/**
+	 * Get the RestTemplate instance
+	 */
+	protected RestTemplate getRestTemplate() {
+		return this.restTemplate;
+	}
 
 	@Override
 	public ApiOperations apiOperations()
@@ -236,7 +267,6 @@ public class SalesforceTemplate extends AbstractOAuth2ApiBinding implements Sale
 	private void initialize()
 	{
 		//Add the ApiRequestInterceptor to the rest template used by all of the operations classes
-		RestTemplate restTemplate = getRestTemplate();
 		List<ClientHttpRequestInterceptor> interceptors = restTemplate.getInterceptors();
 		interceptors.add(new ApiRequestInterceptor(this));
 		restTemplate.setInterceptors(interceptors);
@@ -253,20 +283,7 @@ public class SalesforceTemplate extends AbstractOAuth2ApiBinding implements Sale
 		customApiOperatinos = new CustomApiTemplate(this, restTemplate);
 	}
 
-
-	@Override
-	protected List<HttpMessageConverter<?>> getMessageConverters()
-	{
-		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
-		messageConverters.add(new StringHttpMessageConverter());
-		messageConverters.add(getFormMessageConverter());
-		messageConverters.add(this.getJsonMessageConverter2());
-		messageConverters.add(this.getByteArrayMessageConverter());
-		return messageConverters;
-	}
-
-	@SuppressWarnings("null")
-    protected MappingJackson2HttpMessageConverter getJsonMessageConverter2()
+	protected MappingJackson2HttpMessageConverter getJsonMessageConverter()
 	{
 		MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
 		objectMapper = new ObjectMapper();
@@ -275,17 +292,11 @@ public class SalesforceTemplate extends AbstractOAuth2ApiBinding implements Sale
 		return converter;
 	}
 
-	@Override
 	protected ByteArrayHttpMessageConverter getByteArrayMessageConverter()
 	{
 		ByteArrayHttpMessageConverter converter = new ByteArrayHttpMessageConverter();
 		converter.setSupportedMediaTypes(Objects.requireNonNull(List.of(MediaType.ALL)));
 		return converter;
-	}
-
-	@Override
-	protected void configureRestTemplate(RestTemplate restTemplate) {
-		restTemplate.setErrorHandler(new SalesforceErrorHandler());
 	}
 
 	@SuppressWarnings("unchecked")

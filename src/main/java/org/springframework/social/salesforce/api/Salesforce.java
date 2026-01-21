@@ -16,7 +16,6 @@
 package org.springframework.social.salesforce.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.social.ApiBinding;
 
 import java.util.List;
 
@@ -26,7 +25,7 @@ import java.util.List;
  * @author Umut Utkan
  * @author Jared Ottley
  */
-public interface Salesforce extends ApiBinding {
+public interface Salesforce {
 
     public ApiOperations apiOperations();
 

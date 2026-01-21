@@ -15,17 +15,16 @@
  */
 package org.springframework.social.salesforce.connect;
 
-import org.springframework.social.oauth2.AbstractOAuth2ServiceProvider;
 import org.springframework.social.salesforce.api.Salesforce;
 import org.springframework.social.salesforce.api.impl.SalesforceTemplate;
 
 /**
- * Salesforce ServiceProvider implementation.
+ * Salesforce Service Provider implementation using Spring Security OAuth2.
  *
  * @author Umut Utkan
  * @author Jared Ottley
  */
-public class SalesforceServiceProvider extends AbstractOAuth2ServiceProvider<Salesforce> {
+public class SalesforceServiceProvider {
     
     //Provider ID
     public final static String ID = "salesforce";
@@ -35,6 +34,8 @@ public class SalesforceServiceProvider extends AbstractOAuth2ServiceProvider<Sal
     
     public final static String TOKEN_PATH      = "/services/oauth2/token";
     public final static String AUTHORIZE_PATH  = "/services/oauth2/authorize";
+    
+    private SalesforceOAuth2Client oAuth2Client;
 
     public SalesforceServiceProvider(String clientId, String clientSecret) {
         this(clientId, clientSecret,
@@ -44,19 +45,24 @@ public class SalesforceServiceProvider extends AbstractOAuth2ServiceProvider<Sal
     
     public SalesforceServiceProvider(String clientId, String clientSecret, boolean sandbox)
     {
-        super(new SalesforceOAuth2Template(clientId, clientSecret, (sandbox ? SANDBOX_GATEWAY_URL : PRODUCTION_GATEWAY_URL) + AUTHORIZE_PATH, (sandbox ? SANDBOX_GATEWAY_URL : PRODUCTION_GATEWAY_URL) + TOKEN_PATH));
+        this(clientId, clientSecret,
+                (sandbox ? SANDBOX_GATEWAY_URL : PRODUCTION_GATEWAY_URL) + AUTHORIZE_PATH,
+                (sandbox ? SANDBOX_GATEWAY_URL : PRODUCTION_GATEWAY_URL) + TOKEN_PATH);
     }
 
     public SalesforceServiceProvider(String clientId, String clientSecret, String authorizeUrl, String tokenUrl) {
-        super(new SalesforceOAuth2Template(clientId, clientSecret, authorizeUrl, tokenUrl));
+        this.oAuth2Client = new SalesforceOAuth2Client(clientId, clientSecret, authorizeUrl, tokenUrl);
     }
 
+    public SalesforceOAuth2Client getOAuth2Client() {
+        return oAuth2Client;
+    }
 
     public Salesforce getApi(String accessToken) {
         SalesforceTemplate template = new SalesforceTemplate(accessToken);
 
         // gets the returned instance url and sets to Salesforce template as base url.
-        String instanceUrl = ((SalesforceOAuth2Template) getOAuthOperations()).getInstanceUrl();
+        String instanceUrl = oAuth2Client.getInstanceUrl();
         if (instanceUrl != null) {
             template.setInstanceUrl(instanceUrl);
         }
