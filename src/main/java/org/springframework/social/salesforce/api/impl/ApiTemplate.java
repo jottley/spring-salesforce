@@ -26,8 +26,8 @@ import org.springframework.social.salesforce.api.ApiOperations;
 import org.springframework.social.salesforce.api.ApiVersion;
 import org.springframework.social.salesforce.api.InvalidSalesforceApiVersionException;
 import org.springframework.social.salesforce.api.Salesforce;
-import org.springframework.social.support.URIBuilder;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -54,7 +54,7 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
 
     @Override
     public List<ApiVersion> getVersions() {
-        URI uri = URIBuilder.fromUri(api.getBaseUrl()).build();
+        URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl()).build().toUri();
 
         //Ensure URI is not null before making the call
         if (uri == null) {

@@ -20,7 +20,6 @@ import java.util.Map;
 import org.springframework.social.salesforce.api.Salesforce;
 import org.springframework.social.salesforce.api.impl.SalesforceTemplate;
 import org.springframework.social.salesforce.connect.SalesforceServiceProvider;
-import org.springframework.social.support.ClientHttpRequestFactorySelector;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -85,7 +84,7 @@ public class BaseSalesforceFactory implements SalesforceFactory {
 
     private static RestTemplate createRestTemplate() {
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.setRequestFactory(ClientHttpRequestFactorySelector.getRequestFactory());
+        // Using default request factory - Spring will auto-detect the best available
         restTemplate.setErrorHandler(new ErrorHandler());
         return restTemplate;
     }

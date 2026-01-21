@@ -22,8 +22,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.social.salesforce.api.ResultItem;
 import org.springframework.social.salesforce.api.Salesforce;
 import org.springframework.social.salesforce.api.SearchOperations;
-import org.springframework.social.support.URIBuilder;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -48,7 +48,7 @@ public class SearchTemplate extends AbstractSalesForceOperations<Salesforce> imp
     @Override
     public List<ResultItem> search(String soslQuery) {
         requireAuthorization();
-        URI uri = URIBuilder.fromUri(api.getBaseUrl() + "/" + getVersion() + "/search").queryParam("q", soslQuery).build();
+        URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl() + "/" + getVersion() + "/search").queryParam("q", soslQuery).build().toUri();
 
         if (uri == null || StringUtils.isBlank(uri.toString())) {
             throw new IllegalArgumentException("Query URI cannot be null or empty");

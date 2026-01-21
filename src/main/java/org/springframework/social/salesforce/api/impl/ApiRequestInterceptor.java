@@ -60,7 +60,7 @@ public class ApiRequestInterceptor implements ClientHttpRequestInterceptor {
      * @param response
      */
     private void processSForceLimitInfoHeader(ClientHttpResponse response) {
-        if (response.getHeaders().containsKey(SFORCE_LIMIT_INFO)) {
+        if (response.getHeaders().get(SFORCE_LIMIT_INFO) != null) {
             ((LimitsOperationsTemplate) salesforceTemplate.limitsOperations())
                     .setCurrentDailyApiLimits(response.getHeaders().getFirst(SFORCE_LIMIT_INFO));
         }

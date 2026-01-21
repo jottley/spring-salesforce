@@ -21,8 +21,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.social.salesforce.api.QueryOperations;
 import org.springframework.social.salesforce.api.QueryResult;
 import org.springframework.social.salesforce.api.Salesforce;
-import org.springframework.social.support.URIBuilder;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Default implementation of QueryOperations.
@@ -48,7 +48,7 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
     public QueryResult query(String query, boolean includeDeletedItems) {
         String queryType = includeDeletedItems ? "/queryAll" : "/query";
         requireAuthorization();
-        URI uri = URIBuilder.fromUri(api.getBaseUrl() + "/" + getVersion() + queryType).queryParam("q", query).build();
+        URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl() + "/" + getVersion() + queryType).queryParam("q", query).build().toUri();
 
         if (uri == null || StringUtils.isBlank(uri.toString())) {
             throw new IllegalArgumentException("Query URI cannot be null or empty");

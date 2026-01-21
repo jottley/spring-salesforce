@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2017 https://github.com/jottley/spring-social-salesforce
+ * Copyright (C) 2019 https://github.com/jottley/spring-social-salesforce
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
 package org.springframework.social.salesforce.api;
 
 /**
- * @author Umut Utkan
- * @author Jared Ottley
+ * Exception thrown when a requested resource is not found.
  */
-public class InvalidIDException extends ApiException {
-
-    public InvalidIDException(String message) {
+public class ResourceNotFoundException extends ApiException {
+    
+    public ResourceNotFoundException(String message) {
         super(message);
     }
-
+    
+    public ResourceNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

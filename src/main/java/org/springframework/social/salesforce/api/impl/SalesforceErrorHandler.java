@@ -18,6 +18,7 @@ package org.springframework.social.salesforce.api.impl;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,16 +27,13 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.lang.NonNull;
-import org.springframework.social.InsufficientPermissionException;
-import org.springframework.social.InternalServerErrorException;
-import org.springframework.social.InvalidAuthorizationException;
-import org.springframework.social.RateLimitExceededException;
-import org.springframework.social.ResourceNotFoundException;
-import org.springframework.social.UncategorizedApiException;
-import org.springframework.social.salesforce.api.SalesforceRequestException;
+import org.springframework.lang.Nullable;
+import org.springframework.social.salesforce.api.*;
 import org.springframework.social.salesforce.connect.SalesforceServiceProvider;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 
@@ -57,7 +55,6 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
     private static final String MESSAGE = "message";
     private static final String SESSION_EXPIRED_INVALID = "Invalid access token";
 
-    @Override
     public void handleError(@NonNull ClientHttpResponse response) throws IOException {
         Map<String, Object> errorDetails = extractErrorDetailsFromResponse(response);
 
@@ -65,18 +62,21 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
         handleSalesforceError(statusCode, errorDetails);
         // No need for try-catch - handleSalesforceError will always throw an appropriate exception
     }
+    
+    @Override
+    public void handleError(@NonNull URI url, @NonNull HttpMethod method, @NonNull ClientHttpResponse response) throws IOException {
+        handleError(response);
+    }
 
     private void handleSalesforceError(HttpStatus statusCode, Map<String, Object> errorDetails) {
         switch (statusCode) {
             case NOT_FOUND -> throw new ResourceNotFoundException(
-                    SalesforceServiceProvider.ID,
                     extractErrorMessage(errorDetails)
                 );
             case SERVICE_UNAVAILABLE -> throw new RateLimitExceededException(
-                    SalesforceServiceProvider.ID
+                    "Rate limit exceeded"
                 );
             case INTERNAL_SERVER_ERROR -> throw new InternalServerErrorException(
-                    SalesforceServiceProvider.ID,
                     errorDetails == null ? "Contact Salesforce administrator." : extractErrorMessage(errorDetails)
                 );
             case BAD_REQUEST, MULTIPLE_CHOICES -> throw new SalesforceRequestException(
@@ -84,15 +84,12 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
                     errorDetails
                 );
             case UNAUTHORIZED -> throw new InvalidAuthorizationException(
-                    SalesforceServiceProvider.ID,
                     extractErrorMessage(errorDetails)
                 );
             // The called method throws the exceptions
             case FORBIDDEN -> handleForbiddenError(errorDetails);
             default -> throw new UncategorizedApiException(
-                    SalesforceServiceProvider.ID,
-                    extractErrorMessage(errorDetails),
-                    null
+                    extractErrorMessage(errorDetails)
                 );
         }
     }
@@ -105,21 +102,17 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
         String message = extractErrorMessage(errorDetails);
 
         if (BAD_OAUTH_TOKEN.equals(errorDetails.get(ERROR_CODE))) {
-            throw new InvalidAuthorizationException(SalesforceServiceProvider.ID, message);
+            throw new InvalidAuthorizationException(message);
         }
 
         throw new InsufficientPermissionException(message);
     }
 
     private void handleUncategorizedError(@NonNull ClientHttpResponse response, Map<String, Object> errorDetails) {
-        try {
-            super.handleError(response);
-        } catch (IOException e) {
-            String message = (errorDetails == null || errorDetails.isEmpty())
-                ? "No error details from Salesforce."
-                : extractErrorMessage(errorDetails);
-            throw new UncategorizedApiException(SalesforceServiceProvider.ID, message, e);
-        }
+        String message = (errorDetails == null || errorDetails.isEmpty())
+            ? "No error details from Salesforce."
+            : extractErrorMessage(errorDetails);
+        throw new UncategorizedApiException(message);
     }
 
     @SuppressWarnings("unchecked")
@@ -146,7 +139,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
             }
 
             logger.error("Unable to parse salesforce response: {} ", new String(body));
-            throw new UncategorizedApiException(SalesforceServiceProvider.ID, "Unable to read salesforce response.", e);
+            throw new UncategorizedApiException("Unable to read salesforce response.");
         }
 
         return Collections.emptyMap();
@@ -179,7 +172,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
         }
         catch (IOException e)
         {
-            throw new UncategorizedApiException(SalesforceServiceProvider.ID, "Unable to extract Salesforce response.", e);
+            throw new UncategorizedApiException("Unable to extract Salesforce response.", e);
         }
     }
 }

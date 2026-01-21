@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.social.ApiException;
-import org.springframework.social.salesforce.connect.SalesforceServiceProvider;
 
 /**
  * Encapsulates the error response sent by Salesforce.
@@ -41,20 +39,20 @@ public class SalesforceRequestException extends ApiException {
     private final String code;
 
     public SalesforceRequestException(String message) {
-        super(SalesforceServiceProvider.ID, message);
+        super(message);
         this.code = null;
         this.fields = null;
     }
     
     public SalesforceRequestException(String providerId, String message) {
-        super(providerId, message);
+        super(message);
         this.code = null;
         this.fields = null;
     }
 
     @SuppressWarnings("unchecked")
     public SalesforceRequestException(Map<String, Object> errorDetails) {
-        super(SalesforceServiceProvider.ID, (String)errorDetails.get("message"));
+        super((String)errorDetails.get("message"));
 
         this.code = StringUtils.defaultString((String)errorDetails.get("errorCode"), "UNKNOWN");
         this.fields = (List<String>) errorDetails.get("fields");
@@ -62,7 +60,7 @@ public class SalesforceRequestException extends ApiException {
     
     @SuppressWarnings("unchecked")
     public SalesforceRequestException(String providerId, Map<String, Object> errorDetails) {
-        super(providerId, (String)errorDetails.get("message"));
+        super((String)errorDetails.get("message"));
 
         this.code = StringUtils.defaultString((String)errorDetails.get("errorCode"), "UNKNOWN");
         this.fields = (List<String>) errorDetails.get("fields");

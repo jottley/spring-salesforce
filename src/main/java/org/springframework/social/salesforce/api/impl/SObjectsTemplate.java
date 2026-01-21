@@ -31,9 +31,9 @@ import org.springframework.social.salesforce.api.SObjectDetail;
 import org.springframework.social.salesforce.api.SObjectOperations;
 import org.springframework.social.salesforce.api.SObjectSummary;
 import org.springframework.social.salesforce.api.Salesforce;
-import org.springframework.social.support.URIBuilder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -75,11 +75,11 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
     @Override
     public Map getRow(String name, String id, String... fields) {
         requireAuthorization();
-        URIBuilder builder = URIBuilder.fromUri(api.getBaseUrl() + "/" + getVersion() + "/sobjects/" + name + "/" + id);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(api.getBaseUrl() + "/" + getVersion() + "/sobjects/" + name + "/" + id);
         if (fields.length > 0) {
             builder.queryParam("fields", StringUtils.arrayToCommaDelimitedString(fields));
         }
-        return restTemplate.getForObject(builder.build(), Map.class);
+        return restTemplate.getForObject(builder.build().toUri(), Map.class);
     }
 
     @Override
