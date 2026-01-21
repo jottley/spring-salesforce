@@ -15,14 +15,13 @@
  */
 package org.springframework.social.salesforce.api.impl;
 
-import org.junit.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.social.salesforce.api.ResultItem;
-
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 import static org.springframework.http.HttpMethod.GET;
+import org.springframework.http.HttpStatus;
+import org.springframework.social.salesforce.api.ResultItem;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -36,7 +35,7 @@ public class SearchTemplateTest extends AbstractSalesforceTest {
 
     @Test
     public void search() {
-        mockServer.expect(requestTo("https://na7.salesforce.com/services/data/" + salesforce.apiOperations().getVersion() + "/search?q=FIND+%7Bxxx*%7D+IN+ALL+FIELDS+RETURNING+Contact%2C+Account"))
+        mockServer.expect(requestTo("https://na7.salesforce.com/services/data/" + salesforce.apiOperations().getVersion() + "/search?q=FIND%20%7Bxxx*%7D%20IN%20ALL%20FIELDS%20RETURNING%20Contact,%20Account"))
                 .andExpect(method(GET))
                 .andRespond(withStatus(HttpStatus.OK).body(loadResource("search.json")).headers(responseHeaders));
         List<ResultItem> results = salesforce.searchOperations().search("FIND {xxx*} IN ALL FIELDS RETURNING Contact, Account");
