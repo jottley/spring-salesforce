@@ -70,8 +70,12 @@ public class ErrorHandler extends DefaultResponseErrorHandler {
             }
         }
 
-        // Call parent handleError with required parameters for Spring 7
-        handleError(null, null, response);
+        // For Spring 7, call the new API with proper URI - use a dummy URI if not available
+        try {
+            handleError(new URI("http://localhost"), HttpMethod.POST, response);
+        } catch (Exception e) {
+            throw new IOException("Error handling HTTP response", e);
+        }
     }
     
     @Override

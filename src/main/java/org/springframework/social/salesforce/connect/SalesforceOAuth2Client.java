@@ -59,19 +59,20 @@ public class SalesforceOAuth2Client {
      * Build the authorization URL for the OAuth2 flow
      */
     public String buildAuthorizeUrl(String redirectUri, String scope, String state) {
-        StringBuilder url = new StringBuilder(authorizeUrl);
-        url.append("?response_type=code");
-        url.append("&client_id=").append(clientId);
+        org.springframework.web.util.UriComponentsBuilder builder = 
+            org.springframework.web.util.UriComponentsBuilder.fromUriString(authorizeUrl);
+        builder.queryParam("response_type", "code");
+        builder.queryParam("client_id", clientId);
         if (redirectUri != null) {
-            url.append("&redirect_uri=").append(redirectUri);
+            builder.queryParam("redirect_uri", redirectUri);
         }
         if (scope != null) {
-            url.append("&scope=").append(scope);
+            builder.queryParam("scope", scope);
         }
         if (state != null) {
-            url.append("&state=").append(state);
+            builder.queryParam("state", state);
         }
-        return url.toString();
+        return builder.build().toUriString();
     }
 
     /**
