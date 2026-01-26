@@ -44,6 +44,7 @@
     },
     "isChatterGuest":false,
     "id":"005A0000001cRuvIAE",
+    "username":"umut.utkan@foo.com",
     "type":"User",
     "url":"/services/data/v37.0/chatter/users/005A0000001cRuvIAE"
 }
