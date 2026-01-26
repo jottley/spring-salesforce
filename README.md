@@ -1,38 +1,37 @@
-# Spring Salesforce [![Maven Package](https://github.com/jottley/spring-salesforce/actions/workflows/maven-publish.yml/badge.svg?event=release)](https://github.com/jottley/spring-salesforce/actions/workflows/maven-publish.yml)
-
+# Spring Salesforce
 Spring Salesforce is a Spring extension that provides connection support and API binding for the Salesforce
 REST API.
 
-To check out the project and build from source, do the following:
+## Usage
+The library can leverage spring-security or can implement the OAuth2 flow independent of it.
 
-    git clone git://github.com/jottley/spring-salesforce.git
-    cd spring-salesforce
-    mvn clean install
-    
+There is a Spring Boot Example app available at https://github.com/jottley/spring-salesforce-quickstart
+
+It gives examples of both use cases.
+
 ## Maven
 To include in your Maven project, use the following repository and dependency
 
+```xml
     <repositories>
     ...
         <repository>
             <id>spring-salesforce</id>
-            <url>https://maven.pkg.github.com/jottley/spring-social-salesforce</url>
+            <url>https://repo.repsy.io/mvn/jottley/spring-salesforce</url>
         </repository>
     ...
     </repositories>
-    
+
     <dependencies>
     ...
         <dependency>
           <groupId>org.springframework</groupId>
           <artifactId>spring-salesforce</artifactId>
-          <version>2.0.0</version>
+          <version>2.0.0-SNAPSHOT</version>
         </dependency>
     ...
     </dependencies>
-    
-## Quickstart
-There is a Spring Boot Example app available at https://github.com/jottley/spring-salesforce-quickstart
+```
 
 ## Supported Operations
  - Retrieve all available API versions
@@ -54,4 +53,8 @@ There is a Spring Boot Example app available at https://github.com/jottley/sprin
  - List the limits of an org
  - Check the current API limit and usage
  - Get a list of Communities (Digital Experience)
- - Get a list of Community (Digital Experience) users 
+ - Get a list of Community (Digital Experience) users
+
+
+## Historical Notes
+The project maintains part of the package naming for historical reasons. It should be thought of as deprecated and will eventually be removed. It is not associated with Spring beyond that it leverages libraries from Spring and is intended to be used by projects that use the Spring framework.

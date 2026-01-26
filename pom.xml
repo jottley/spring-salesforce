@@ -9,7 +9,7 @@
 	<packaging>jar</packaging>
 
 	<name>spring-salesforce</name>
-	<url>https://github.com/jottley/spring-social-salesforce</url>
+	<url>https://github.com/jottley/spring-salesforce</url>
 
 	<properties>
 		<jdk.version>17</jdk.version>
@@ -225,19 +225,19 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/jottley/spring-social-salesforce</url>
-		<connection>scm:git:git@github.com:jottley/spring-social-salesforce.git</connection>
-		<developerConnection>scm:git:git@github.com:jottley/spring-social-salesforce.git</developerConnection>
+		<url>https://github.com/jottley/spring-salesforce</url>
+		<connection>scm:git:git@github.com:jottley/spring-salesforce.git</connection>
+		<developerConnection>scm:git:git@github.com:jottley/spring-salesforce.git</developerConnection>
 	</scm>
 	<issueManagement>
 		<system>GitHub</system>
-		<url>https://github.com/jottley/spring-social-salesforce/issues</url>
+		<url>https://github.com/jottley/spring-salesforce/issues</url>
 	</issueManagement>
     <distributionManagement>
         <repository>
-            <id>github</id>
-            <name>spring-social-salesforce</name>
-            <url>https://maven.pkg.github.com/jottley/spring-social-salesforce</url>
+            <id>repsy</id>
+            <name>spring-salesforce</name>
+            <url>https://repo.repsy.io/mvn/jottley/spring-salesforce</url>
         </repository>
     </distributionManagement>
 </project>
