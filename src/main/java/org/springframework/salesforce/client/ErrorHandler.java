@@ -73,19 +73,14 @@ public class ErrorHandler extends DefaultResponseErrorHandler {
                 throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
             }
         }
-
-        // For Spring 7, call the new API with proper URI - use a dummy URI if not available
-        try {
-            handleError(new URI("http://localhost"), HttpMethod.POST, response);
-        } catch (Exception e) {
-            throw new IOException("Error handling HTTP response", e);
-        }
     }
 
     @Override
     public void handleError(@NonNull URI url, @NonNull HttpMethod method, @NonNull ClientHttpResponse response) throws IOException {
         if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
             handleError(response);
+            // if not handled, fall through to default handling
+            super.handleError(url, method, response);
             return;
         }
         super.handleError(url, method, response);

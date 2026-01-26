@@ -28,11 +28,6 @@ public class SalesforceConnectionFactory {
     private final SalesforceServiceProvider serviceProvider;
     private final SalesforceProfileMapper profileMapper;
 
-    public SalesforceConnectionFactory() {
-        this.serviceProvider = new SalesforceServiceProvider(null, null);
-        this.profileMapper = new SalesforceProfileMapper();
-    }
-
     public SalesforceConnectionFactory(String clientId, String clientSecret) {
         this.serviceProvider = new SalesforceServiceProvider(clientId, clientSecret);
         this.profileMapper = new SalesforceProfileMapper();
