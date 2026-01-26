@@ -1,12 +1,12 @@
-# Spring Social Salesforce [![Maven Package](https://github.com/jottley/spring-social-salesforce/actions/workflows/maven-publish.yml/badge.svg?event=release)](https://github.com/jottley/spring-social-salesforce/actions/workflows/maven-publish.yml)
+# Spring Salesforce [![Maven Package](https://github.com/jottley/spring-salesforce/actions/workflows/maven-publish.yml/badge.svg?event=release)](https://github.com/jottley/spring-salesforce/actions/workflows/maven-publish.yml)
 
-Spring Social Salesforce is a Spring Social extension that provides connection support and API binding for Salesforce
+Spring Salesforce is a Spring extension that provides connection support and API binding for the Salesforce
 REST API.
 
 To check out the project and build from source, do the following:
 
-    git clone git://github.com/jottley/spring-social-salesforce.git
-    cd spring-social-salesforce
+    git clone git://github.com/jottley/spring-salesforce.git
+    cd spring-salesforce
     mvn clean install
     
 ## Maven
@@ -15,7 +15,7 @@ To include in your Maven project, use the following repository and dependency
     <repositories>
     ...
         <repository>
-            <id>spring-social-salesforce</id>
+            <id>spring-salesforce</id>
             <url>https://maven.pkg.github.com/jottley/spring-social-salesforce</url>
         </repository>
     ...
@@ -24,15 +24,15 @@ To include in your Maven project, use the following repository and dependency
     <dependencies>
     ...
         <dependency>
-          <groupId>org.springframework.social</groupId>
-          <artifactId>spring-social-salesforce</artifactId>
-          <version>1.3.0.RELEASE</version>
+          <groupId>org.springframework</groupId>
+          <artifactId>spring-salesforce</artifactId>
+          <version>2.0.0</version>
         </dependency>
     ...
     </dependencies>
     
 ## Quickstart
-There is a Spring Boot quickstart app available at https://github.com/jottley/spring-social-salesforce-quickstart
+There is a Spring Boot Example app available at https://github.com/jottley/spring-salesforce-quickstart
 
 ## Supported Operations
  - Retrieve all available API versions
