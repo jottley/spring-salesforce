@@ -1,9 +1,9 @@
 # Spring Salesforce
-Spring Salesforce is a Spring extension that provides connection support and API binding for the Salesforce
+Spring Salesforce is a Spring extension that provides connection support and API binding for Salesforces
 REST API.
 
 ## Usage
-The library can leverage spring-security or can implement the OAuth2 flow independent of it.
+The library can leverage Spring Security or implement the OAuth2 flow independently of it.
 
 There is a Spring Boot Example app available at https://github.com/jottley/spring-salesforce-quickstart
 
@@ -27,7 +27,7 @@ To include in your Maven project, use the following repository and dependency
         <dependency>
           <groupId>org.springframework</groupId>
           <artifactId>spring-salesforce</artifactId>
-          <version>2.0.0-SNAPSHOT</version>
+          <version>2.0.0</version>
         </dependency>
     ...
     </dependencies>
@@ -57,4 +57,4 @@ To include in your Maven project, use the following repository and dependency
 
 
 ## Historical Notes
-The project maintains part of the package naming for historical reasons. It should be thought of as deprecated and will eventually be removed. It is not associated with Spring beyond that it leverages libraries from Spring and is intended to be used by projects that use the Spring framework.
+The project maintains part of the package naming for historical reasons. It should be thought of as deprecated and will eventually be removed. It is not associated with Spring beyond that; it leverages libraries from Spring and is intended to be used by projects that use the Spring framework.
