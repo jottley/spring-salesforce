@@ -100,6 +100,28 @@ public class SalesforceOAuth2Client {
     }
 
     /**
+     * Obtain an access token using the OAuth 2.0 client credentials flow.
+     * <p>
+     * The token URL must be the org's My Domain URL (for example
+     * {@code https://mydomain.my.salesforce.com/services/oauth2/token}); the flow is not
+     * supported on login.salesforce.com or test.salesforce.com. The response does not
+     * include a refresh token, so request a new token when the current one expires.
+     *
+     * @param scope optional space-separated scopes; null uses the scopes configured on the app
+     */
+    public AccessGrant clientCredentialsAccess(String scope) {
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("grant_type", "client_credentials");
+        parameters.add("client_id", clientId);
+        parameters.add("client_secret", clientSecret);
+        if (scope != null) {
+            parameters.add("scope", scope);
+        }
+
+        return postForToken(parameters);
+    }
+
+    /**
      * Post request for access token
      * Handles Salesforce's non-standard content type response
      */
