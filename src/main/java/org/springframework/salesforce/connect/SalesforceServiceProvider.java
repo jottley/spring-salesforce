@@ -73,7 +73,7 @@ public class SalesforceServiceProvider {
     public Salesforce getApi(String accessToken, String instanceUrl) {
         SalesforceTemplate template = new SalesforceTemplate(accessToken);
 
-        if (instanceUrl == null) {
+        if (instanceUrl != null) {
             template.setInstanceUrl(instanceUrl);
         }
 

@@ -9,6 +9,41 @@ There is a Spring Boot Example app available at https://github.com/jottley/sprin
 
 It gives examples of both use cases.
 
+### Authorization code flow
+For flows where a user signs in to Salesforce, create a Connected App (or External Client App) with a callback URL, then redirect the user to the authorize URL and exchange the returned code for a token:
+
+```java
+SalesforceServiceProvider provider = new SalesforceServiceProvider(clientId, clientSecret); // or (clientId, clientSecret, true) for a sandbox
+SalesforceOAuth2Client oauth = provider.getOAuth2Client();
+
+// 1. Send the user here (state should be a random value you verify on return)
+String authorizeUrl = oauth.buildAuthorizeUrl("https://myapp.example.com/callback", "api refresh_token", state);
+
+// 2. In your callback handler, exchange the code Salesforce sends back
+AccessGrant grant = oauth.exchangeForAccess(code, "https://myapp.example.com/callback");
+Salesforce salesforce = provider.getApi(grant.getAccessToken());
+
+// 3. When the access token expires (requires the refresh_token scope)
+AccessGrant refreshed = oauth.refreshAccess(grant.getRefreshToken());
+```
+
+The redirect URI must match the one configured on the app. The `refresh_token` scope must be granted to receive a refresh token.
+
+### Client credentials flow
+For server-to-server use with no user interaction, configure an External Client App (or Connected App) with the client credentials flow enabled and a run-as user, then point the provider at your My Domain token URL (the flow is not available on login.salesforce.com):
+
+```java
+SalesforceServiceProvider provider = new SalesforceServiceProvider(
+        clientId, clientSecret,
+        "https://mydomain.my.salesforce.com/services/oauth2/authorize",
+        "https://mydomain.my.salesforce.com/services/oauth2/token");
+
+AccessGrant grant = provider.getOAuth2Client().clientCredentialsAccess(null);
+Salesforce salesforce = provider.getApi(grant.getAccessToken());
+```
+
+No refresh token is returned; request a new token when the current one expires.
+
 ## Maven
 To include in your Maven project, use the following repository and dependency
 
