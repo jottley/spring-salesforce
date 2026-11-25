@@ -105,8 +105,8 @@ public class LimitsResults implements Serializable {
     @JsonProperty("StreamingApiConcurrentClients")
     private LimitResult streamingApiConcurrentClients;
     @JsonIgnore
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
-    private final static long serialVersionUID = 3810468125069690661L;
+    private final Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    private static final long serialVersionUID = 3810468125069690661L;
 
     /**
      * No args constructor for use in serialization
