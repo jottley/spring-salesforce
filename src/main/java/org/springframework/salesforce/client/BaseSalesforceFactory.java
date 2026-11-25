@@ -35,13 +35,13 @@ public class BaseSalesforceFactory implements SalesforceFactory {
     private static final String DEFAULT_AUTH_URL = SalesforceServiceProvider.PRODUCTION_GATEWAY_URL + SalesforceServiceProvider.TOKEN_PATH;
 
 
-    private String clientId;
+    private final String clientId;
 
-    private String clientSecret;
+    private final String clientSecret;
 
     private String authorizeUrl = DEFAULT_AUTH_URL;
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
 
     public BaseSalesforceFactory(String clientId, String clientSecret) {
