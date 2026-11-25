@@ -21,13 +21,8 @@ package org.springframework.salesforce.api;
  *
  */
 public class InvalidSalesforceApiVersionException
-        extends Throwable
+        extends ApiException
 {
-    public InvalidSalesforceApiVersionException()
-    {
-        //NOOP
-    }
-
     public InvalidSalesforceApiVersionException(String version)
     {
         super(version + " is not a valid Salesforce Api version.");
