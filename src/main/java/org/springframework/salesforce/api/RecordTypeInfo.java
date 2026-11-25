@@ -20,13 +20,13 @@ package org.springframework.salesforce.api;
  */
 public class RecordTypeInfo {
 
-    private String name;
+    private final String name;
 
-    private boolean available;
+    private final boolean available;
 
-    private String recordTypeId;
+    private final String recordTypeId;
 
-    private boolean defaultRecordTypeMapping;
+    private final boolean defaultRecordTypeMapping;
 
 
     public RecordTypeInfo(String name, boolean available, String recordTypeId, boolean defaultRecordTypeMapping) {
