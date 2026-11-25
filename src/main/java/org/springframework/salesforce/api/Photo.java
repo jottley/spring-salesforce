@@ -31,7 +31,7 @@ public class Photo {
 
 
     public Photo() {
-
+        //NOOP
     }
 
 
