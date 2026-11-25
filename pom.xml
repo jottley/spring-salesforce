@@ -16,7 +16,7 @@
 		<logback.version>1.5.19</logback.version>
 		<spring.version>7.0.0</spring.version>
 		<spring-security.version>7.0.0</spring-security.version>
-		<httpclient.version>5.2.1</httpclient.version>
+		<httpclient.version>5.6.3</httpclient.version>
 		<servlet.version>6.0.0</servlet.version>
 		<jackson.version>2.17.2</jackson.version>
 		<joor.version>0.9.4</joor.version>
