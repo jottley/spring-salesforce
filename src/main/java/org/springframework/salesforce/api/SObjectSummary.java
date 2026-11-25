@@ -66,7 +66,7 @@ public class SObjectSummary {
 
 
     public SObjectSummary() {
-
+        //NOOP
     }
 
 
