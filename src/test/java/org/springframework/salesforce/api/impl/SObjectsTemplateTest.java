@@ -24,6 +24,7 @@ import org.springframework.salesforce.api.SObjectDetail;
 import org.springframework.salesforce.api.SObjectSummary;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
@@ -130,6 +131,21 @@ public class SObjectsTemplateTest extends AbstractSalesforceTest
         BufferedReader reader = new BufferedReader(
                     new InputStreamReader(salesforce.sObjectsOperations().getBlob("Account", "xxx", "avatar")));
         assertEquals("does-not-matter", reader.readLine());
+    }
+
+    @Test
+    public void downloadBlobStreamsToOutputStream() throws IOException
+    {
+        responseHeaders.remove("content-type");
+        mockServer.expect(requestTo("https://na7.salesforce.com/services/data/" + salesforce.apiOperations().getVersion() + "/sobjects/Account/xxx/avatar"))
+                  .andExpect(method(GET))
+                  .andRespond(withStatus(HttpStatus.OK).body(new ByteArrayResource("does-not-matter".getBytes("UTF-8"))).headers(responseHeaders));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        long written = salesforce.sObjectsOperations().downloadBlob("Account", "xxx", "avatar", out);
+
+        assertEquals(15L, written);
+        assertEquals("does-not-matter", out.toString("UTF-8"));
     }
 
     @Test
