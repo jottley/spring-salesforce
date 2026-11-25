@@ -43,7 +43,7 @@ public class AbstractLimits implements Serializable {
     private int remaining;
 
     @JsonIgnore
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    private final Map<String, Object> additionalProperties = new HashMap<>();
 
     /**
      * NOOP
