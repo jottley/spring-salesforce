@@ -35,7 +35,7 @@ public class SalesforceServiceProvider {
     public static final String TOKEN_PATH      = "/services/oauth2/token";
     public static final String AUTHORIZE_PATH  = "/services/oauth2/authorize";
 
-    private SalesforceOAuth2Client oAuth2Client;
+    private final SalesforceOAuth2Client oAuth2Client;
 
     public SalesforceServiceProvider(String clientId, String clientSecret) {
         this(clientId, clientSecret,
