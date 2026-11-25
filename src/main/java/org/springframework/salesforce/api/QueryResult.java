@@ -22,9 +22,9 @@ import java.util.List;
  */
 public class QueryResult {
 
-    private int totalSize;
+    private final int totalSize;
 
-    private boolean done;
+    private final boolean done;
 
     private String nextRecordsUrl;
 
