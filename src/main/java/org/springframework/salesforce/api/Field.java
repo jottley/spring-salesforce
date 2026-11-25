@@ -24,13 +24,13 @@ public class Field {
 
     private int length;
 
-    private String name;
+    private final String name;
 
-    private String type;
+    private final String type;
 
     private String defaultValue;
 
-    private String label;
+    private final String label;
 
     private boolean updateable;
 
