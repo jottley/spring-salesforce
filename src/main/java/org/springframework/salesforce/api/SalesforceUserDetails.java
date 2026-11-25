@@ -24,11 +24,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SalesforceUserDetails extends SalesforceProfile {
-    private String organizationId;
+    private final String organizationId;
 
-    private String nickname;
+    private final String nickname;
 
-    private String preferredUsername;
+    private final String preferredUsername;
 
     public SalesforceUserDetails(String id, String firstName, String lastName,
         String email, String name, String organizationId, String nickname,
