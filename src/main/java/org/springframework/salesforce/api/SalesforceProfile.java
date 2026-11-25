@@ -40,14 +40,6 @@ public class SalesforceProfile implements Serializable {
 
     protected String username;
 
-    /*public SalesforceProfile(String id, String firstName, String lastName, String email) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-    }*/
-
-
     public String getId() {
         return id;
     }
