@@ -20,17 +20,17 @@ package org.springframework.salesforce.api;
  */
 public class Relationship {
 
-    private String field;
+    private final String field;
 
     private boolean deprecatedAndHidden;
 
-    private String relationshipName;
+    private final String relationshipName;
 
     private boolean cascadeDelete;
 
     private boolean restrictedDelete;
 
-    private String childSObject;
+    private final String childSObject;
 
 
     public Relationship(String field, String relationshipName, String childObject) {
