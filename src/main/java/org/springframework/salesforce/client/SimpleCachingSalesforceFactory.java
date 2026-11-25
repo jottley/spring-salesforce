@@ -27,9 +27,9 @@ import org.springframework.salesforce.api.Salesforce;
  */
 public class SimpleCachingSalesforceFactory implements SalesforceFactory {
 
-    private SalesforceFactory delegate;
+    private final SalesforceFactory delegate;
 
-    private final Map<String, Salesforce> cache = new HashMap<String, Salesforce>();
+    private final Map<String, Salesforce> cache = new HashMap<>();
 
 
     public SimpleCachingSalesforceFactory(SalesforceFactory delegate) {
