@@ -36,7 +36,7 @@ public class SObjectDetail extends SObjectSummary {
 
 
     public SObjectDetail() {
-
+        //NOOP
     }
 
 
