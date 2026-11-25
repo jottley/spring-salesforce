@@ -6,4 +6,7 @@ target
 .project
 .settings
 .classpath
-.vscode/settings.json
+.vscode/
+
+release.properties
+pom.xml.releaseBackup
