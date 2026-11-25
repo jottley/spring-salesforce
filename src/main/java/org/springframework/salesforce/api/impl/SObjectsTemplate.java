@@ -17,6 +17,7 @@ package org.springframework.salesforce.api.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -102,6 +103,16 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
                     getVersion(), name, id, field);
         return new ByteArrayInputStream(response.getBody());
 
+    }
+
+    @Override
+    public long downloadBlob(String name, String id, String field, OutputStream out) {
+        requireAuthorization();
+        Long written = restTemplate.execute(
+                api.getBaseUrl() + "/{version}/sobjects/{name}/{id}/{field}", HttpMethod.GET, null,
+                response -> response.getBody().transferTo(out),
+                getVersion(), name, id, field);
+        return written == null ? 0L : written;
     }
 
     @Override

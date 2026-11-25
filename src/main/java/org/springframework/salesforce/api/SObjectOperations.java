@@ -16,6 +16,7 @@
 package org.springframework.salesforce.api;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +24,7 @@ import java.util.Map;
  * Defines operations for interacting with the sObjects API.
  *
  * @author Umut Utkan
+ * @author Jared Ottley
  */
 public interface SObjectOperations {
 
@@ -35,6 +37,14 @@ public interface SObjectOperations {
     public Map getRow(String name, String id, String... fields);
 
     public InputStream getBlob(String name, String id, String field);
+
+    /**
+     * Streams a blob field (for example ContentVersion.VersionData or Attachment.Body) to the
+     * given stream without holding the whole content in memory. The caller owns and closes the stream.
+     *
+     * @return the number of bytes written
+     */
+    long downloadBlob(String name, String id, String field, OutputStream out);
 
     Map<String, Object> create(String name, Map<String, Object> fields);
 
