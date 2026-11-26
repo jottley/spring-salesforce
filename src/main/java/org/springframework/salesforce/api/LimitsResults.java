@@ -18,12 +18,15 @@ package org.springframework.salesforce.api;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -34,7 +37,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * issue.
  *
  * Connected App limits can be found in the additionalProperties of the
- * individual LimitResult classes.
+ * individual LimitResult classes. Limits that are not modeled here are available from
+ * {@link #getAdditionalProperties()}.
  *
  * @author Jared Ottley
  */
@@ -107,6 +111,7 @@ public class LimitsResults implements Serializable {
     @JsonIgnore
     private final Map<String, Object> additionalProperties = new HashMap<String, Object>();
     private static final long serialVersionUID = 3810468125069690661L;
+    private static final ObjectMapper LIMIT_MAPPER = new ObjectMapper();
 
     /**
      * No args constructor for use in serialization
@@ -361,6 +366,37 @@ public class LimitsResults implements Serializable {
     @JsonAnyGetter
     public Map<String, Object> getAdditionalProperties() {
         return this.additionalProperties;
+    }
+
+    /**
+     * Keeps any limit that is not one of the modeled ones, such as a limit Salesforce introduced in a
+     * newer API version. The value is left as parsed JSON (usually a map with {@code Max} and
+     * {@code Remaining}) rather than a {@link LimitResult}, so a limit with an unexpected shape can
+     * never break reading the rest of the response.
+     */
+    @JsonAnySetter
+    public void setAdditionalProperty(String name, Object value) {
+        this.additionalProperties.put(name, value);
+    }
+
+    /**
+     * Returns a limit that is not one of the modeled ones as a {@link LimitResult}.
+     *
+     * @param name the limit name exactly as Salesforce sends it
+     * @return the limit, or empty if there is no such limit or it is not shaped like a limit
+     *         (an object with both {@code Max} and {@code Remaining})
+     */
+    public Optional<LimitResult> getAdditionalLimit(String name) {
+        Object value = this.additionalProperties.get(name);
+        if (value instanceof Map<?, ?> map && map.containsKey("Max") && map.containsKey("Remaining")) {
+            try {
+                return Optional.of(LIMIT_MAPPER.convertValue(map, LimitResult.class));
+            } catch (IllegalArgumentException e) {
+                // Max/Remaining present but not numbers; treat it as not a limit
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
     }
 
 }
