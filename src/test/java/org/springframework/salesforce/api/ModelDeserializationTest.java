@@ -154,6 +154,19 @@ public class ModelDeserializationTest {
     }
 
     @Test
+    public void booleanAndNumericDefaultValuesAreExposedAsText() throws Exception {
+        // Seen live at API v68.0: a checkbox field sends "defaultValue": false (a JSON boolean), while the
+        // model holds it as a String. Jackson coerces it, so callers read "false" rather than losing it.
+        Field checkbox = salesforce.readObject(json.readTree("{\"name\":\"IsActive\",\"type\":\"boolean\",\"label\":\"Active\",\"defaultValue\":false}"), Field.class);
+        Field number = salesforce.readObject(json.readTree("{\"name\":\"Size\",\"type\":\"int\",\"label\":\"Size\",\"defaultValue\":5}"), Field.class);
+        Field text = salesforce.readObject(json.readTree("{\"name\":\"Kind\",\"type\":\"string\",\"label\":\"Kind\",\"defaultValue\":\"standard\"}"), Field.class);
+
+        assertEquals("false", checkbox.getDefaultValue());
+        assertEquals("5", number.getDefaultValue());
+        assertEquals("standard", text.getDefaultValue());
+    }
+
+    @Test
     public void picklistValuesAreRead() throws Exception {
         List<JsonNode> entries = new ArrayList<>();
         resource("account_desc.json").get("fields").forEach(f -> f.get("picklistValues").forEach(entries::add));
