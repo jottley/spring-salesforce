@@ -18,7 +18,6 @@ package org.springframework.salesforce.api.impl;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -55,11 +54,6 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
     @Override
     public List<ApiVersion> getVersions() {
         URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl()).build().toUri();
-
-        //Ensure URI is not null before making the call
-        if (uri == null) {
-            throw new IllegalStateException("Salesforce instance URL is null. Ensure that the connection is properly authorized.");
-        }
 
         JsonNode dataNode = restTemplate.getForObject(uri, JsonNode.class);
         return api.readList(dataNode, ApiVersion.class);
@@ -109,15 +103,8 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
 
     private boolean validateVersionString(String version)
     {
-        if (StringUtils.isNotBlank(version))
-        {
-            Pattern pattern = Pattern.compile(versionRegEx);
-            Matcher matcher = pattern.matcher(version);
-
-            return matcher.find();
-        }
-
-        return false;
+        // Callers guarantee a non-blank value (see setVersion)
+        return Pattern.compile(versionRegEx).matcher(version).find();
     }
 
 }

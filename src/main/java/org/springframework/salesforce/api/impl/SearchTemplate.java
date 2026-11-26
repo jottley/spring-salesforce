@@ -18,7 +18,6 @@ package org.springframework.salesforce.api.impl;
 import java.net.URI;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.salesforce.api.ResultItem;
 import org.springframework.salesforce.api.Salesforce;
 import org.springframework.salesforce.api.SearchOperations;
@@ -49,10 +48,6 @@ public class SearchTemplate extends AbstractSalesForceOperations<Salesforce> imp
     public List<ResultItem> search(String soslQuery) {
         requireAuthorization();
         URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl() + "/" + getVersion() + "/search").queryParam("q", soslQuery).build().toUri();
-
-        if (uri == null || StringUtils.isBlank(uri.toString())) {
-            throw new IllegalArgumentException("Query URI cannot be null or empty");
-        }
 
         JsonNode arr = restTemplate.getForObject(uri, JsonNode.class);
         return api.readList(arr, ResultItem.class);
