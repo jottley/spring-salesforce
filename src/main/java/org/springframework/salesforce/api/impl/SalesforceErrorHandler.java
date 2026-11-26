@@ -54,6 +54,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
 
     private static final String ERROR_CODE = "errorCode";
     private static final String BAD_OAUTH_TOKEN = "Bad_OAuth_Token";
+    private static final String REQUEST_LIMIT_EXCEEDED = "REQUEST_LIMIT_EXCEEDED";
     private static final String MESSAGE = "message";
     private static final String SESSION_EXPIRED_INVALID = "Invalid access token";
 
@@ -75,7 +76,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
             case NOT_FOUND -> throw new ResourceNotFoundException(
                     extractErrorMessage(errorDetails)
                 );
-            case SERVICE_UNAVAILABLE -> throw new RateLimitExceededException(
+            case TOO_MANY_REQUESTS, SERVICE_UNAVAILABLE -> throw new RateLimitExceededException(
                     "Rate limit exceeded"
                 );
             case INTERNAL_SERVER_ERROR -> throw new InternalServerErrorException(
@@ -102,11 +103,11 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
 
         String message = extractErrorMessage(errorDetails);
 
-        if (BAD_OAUTH_TOKEN.equals(errorDetails.get(ERROR_CODE))) {
-            throw new InvalidAuthorizationException(message);
+        switch ((String) errorDetails.get(ERROR_CODE)) {
+            case BAD_OAUTH_TOKEN -> throw new InvalidAuthorizationException(message);
+            case REQUEST_LIMIT_EXCEEDED -> throw new RateLimitExceededException(message);
+            default -> throw new InsufficientPermissionException(message);
         }
-
-        throw new InsufficientPermissionException(message);
     }
 
     @SuppressWarnings("unused")
