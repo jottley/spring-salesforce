@@ -114,15 +114,6 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
         }
     }
 
-    @SuppressWarnings("unused")
-    @Deprecated
-    private void handleUncategorizedError(@NonNull ClientHttpResponse response, Map<String, Object> errorDetails) {
-        String message = (errorDetails == null || errorDetails.isEmpty())
-            ? "No error details from Salesforce."
-            : extractErrorMessage(errorDetails);
-        throw new UncategorizedApiException(message);
-    }
-
     @SuppressWarnings("unchecked")
     private Map<String, Object> extractErrorDetailsFromResponse(ClientHttpResponse response) throws IOException {
         //Extract the response body so that it can be reused.  The InputStream provided by the response is closed after single use.
