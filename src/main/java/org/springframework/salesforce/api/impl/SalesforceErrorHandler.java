@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -103,7 +104,8 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
 
         String message = extractErrorMessage(errorDetails);
 
-        switch ((String) errorDetails.get(ERROR_CODE)) {
+        // A missing errorCode falls through to the default case rather than throwing a NullPointerException
+        switch (Objects.toString(errorDetails.get(ERROR_CODE), "")) {
             case BAD_OAUTH_TOKEN -> throw new InvalidAuthorizationException(message);
             case REQUEST_LIMIT_EXCEEDED -> throw new RateLimitExceededException(message);
             default -> throw new InsufficientPermissionException(message);

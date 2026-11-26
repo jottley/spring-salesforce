@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpMethod;
@@ -49,7 +50,8 @@ public class ErrorHandler extends DefaultResponseErrorHandler {
         if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
             Map<String, String> error = extractErrorDetailsFromResponse(response);
 
-            switch (error.get(ERROR)) {
+            // A missing error value (e.g. an unparseable body) falls through to the default case
+            switch (Objects.toString(error.get(ERROR), "")) {
                 case "unsupported_response_type" -> throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
                 case "invalid_client_id" -> throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
                 case "invalid_request" -> throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
