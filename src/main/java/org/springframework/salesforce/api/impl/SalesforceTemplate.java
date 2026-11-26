@@ -83,7 +83,7 @@ public class SalesforceTemplate implements Salesforce {
 
 	private ConnectOperations connectOperations;
 
-	private CustomApiOperations customApiOperatinos;
+	private CustomApiOperations customApiOperations;
 
 	public SalesforceTemplate()
 	{
@@ -280,7 +280,7 @@ public class SalesforceTemplate implements Salesforce {
 		userOperations = new UserOperationsTemplate(this, restTemplate);
 		limitsOperations = new LimitsOperationsTemplate(this, restTemplate);
 		connectOperations = new ConnectTemplate(this, restTemplate);
-		customApiOperatinos = new CustomApiTemplate(this, restTemplate);
+		customApiOperations = new CustomApiTemplate(this, restTemplate);
 	}
 
 	protected MappingJackson2HttpMessageConverter getJsonMessageConverter()
@@ -347,13 +347,13 @@ public class SalesforceTemplate implements Salesforce {
 
 	@Override
 	public CustomApiOperations customApiOperations() {
-		return this.customApiOperatinos;
+		return this.customApiOperations;
 	}
 
 
 	@Override
 	public CustomApiOperations customApiOperations(String instanceUrl) {
 		this.instanceUrl = instanceUrl;
-		return this.customApiOperatinos;
+		return this.customApiOperations;
 	}
 }
