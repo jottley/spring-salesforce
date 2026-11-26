@@ -96,9 +96,30 @@ public class ErrorHandlerTest {
 	}
 
 	@Test
-	public void nonJsonBadRequestBodyIsHandled() {
-		// Unparseable body yields no "error" field; this must not blow up with a NullPointerException.
-		MockClientHttpResponse response = new MockClientHttpResponse("<html/>".getBytes(StandardCharsets.UTF_8), HttpStatus.BAD_REQUEST);
-		assertThrows(OperationNotPermittedException.class, () -> handler.handleError(URL, HttpMethod.POST, response));
+	public void emptyOrUnreadableBadRequestBodiesAreStillReported() {
+		for (String body : new String[] { "", "<html/>", "[]", "[1]", "42", "\"text\"", "null" }) {
+			MockClientHttpResponse response = new MockClientHttpResponse(body.getBytes(StandardCharsets.UTF_8), HttpStatus.BAD_REQUEST);
+			OperationNotPermittedException e = assertThrows(body, OperationNotPermittedException.class,
+					() -> handler.handleError(URL, HttpMethod.POST, response));
+			assertEquals(body, "Salesforce returned a 400 response with no readable error detail", e.getMessage());
+		}
+	}
+
+	@Test
+	public void errorCodeIsUsedWhenThereIsNoDescription() {
+		MockClientHttpResponse response = new MockClientHttpResponse("{\"error\":\"invalid_client_id\"}".getBytes(StandardCharsets.UTF_8), HttpStatus.BAD_REQUEST);
+		InvalidAuthorizationException e = assertThrows(InvalidAuthorizationException.class,
+				() -> handler.handleError(URL, HttpMethod.POST, response));
+		assertEquals("invalid_client_id", e.getMessage());
+	}
+
+	@Test
+	public void nonStringValuesDoNotCauseClassCastExceptions() {
+		MockClientHttpResponse response = new MockClientHttpResponse(
+				"{\"error\":\"invalid_request\",\"error_description\":42,\"extra\":{\"a\":1},\"gone\":null}".getBytes(StandardCharsets.UTF_8),
+				HttpStatus.BAD_REQUEST);
+		OperationNotPermittedException e = assertThrows(OperationNotPermittedException.class,
+				() -> handler.handleError(URL, HttpMethod.POST, response));
+		assertEquals("42", e.getMessage());
 	}
 }

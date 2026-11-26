@@ -16,7 +16,6 @@
 package org.springframework.salesforce.api.impl;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
@@ -156,17 +155,73 @@ public class SalesforceErrorHandlerTest {
 	}
 
 	@Test
-	public void nonJsonUnknownBodyMapsToUncategorized() {
-		UncategorizedApiException e = assertThrows(UncategorizedApiException.class,
+	public void nonJsonBodyDoesNotHideTheStatus() {
+		InternalServerErrorException e = assertThrows(InternalServerErrorException.class,
 				() -> handler.handleError(response(HttpStatus.INTERNAL_SERVER_ERROR, "<html>oops</html>")));
-		assertEquals("Unable to read salesforce response.", e.getMessage());
+		assertEquals("500 Internal Server Error", e.getMessage());
 	}
 
 	@Test
-	public void emptyErrorListOnInternalServerErrorHasNullMessage() {
+	public void emptyErrorListUsesTheStatusAsTheMessage() {
 		InternalServerErrorException e = assertThrows(InternalServerErrorException.class,
 				() -> handler.handleError(response(HttpStatus.INTERNAL_SERVER_ERROR, "[]")));
-		assertNull(e.getMessage());
+		assertEquals("500 Internal Server Error", e.getMessage());
+	}
+
+	@Test
+	public void emptyBodyDoesNotHideTheStatus() {
+		assertThrows(RateLimitExceededException.class, () -> handler.handleError(response(HttpStatus.SERVICE_UNAVAILABLE, "")));
+		assertThrows(RateLimitExceededException.class, () -> handler.handleError(response(HttpStatus.TOO_MANY_REQUESTS, "")));
+		assertThrows(InternalServerErrorException.class, () -> handler.handleError(response(HttpStatus.INTERNAL_SERVER_ERROR, "")));
+		assertThrows(InsufficientPermissionException.class, () -> handler.handleError(response(HttpStatus.FORBIDDEN, "")));
+		assertEquals("404 Not Found", assertThrows(ResourceNotFoundException.class,
+				() -> handler.handleError(response(HttpStatus.NOT_FOUND, ""))).getMessage());
+		assertEquals("401 Unauthorized", assertThrows(InvalidAuthorizationException.class,
+				() -> handler.handleError(response(HttpStatus.UNAUTHORIZED, ""))).getMessage());
+	}
+
+	@Test
+	public void gatewayHtmlBodyStillMapsToRateLimit() {
+		assertThrows(RateLimitExceededException.class,
+				() -> handler.handleError(response(HttpStatus.SERVICE_UNAVAILABLE, "<html>Service Unavailable</html>")));
+	}
+
+	@Test
+	public void singleJsonObjectBodyIsReadLikeAnErrorList() {
+		ResourceNotFoundException e = assertThrows(ResourceNotFoundException.class, () -> handler.handleError(
+				response(HttpStatus.NOT_FOUND, "{\"errorCode\":\"NOT_FOUND\",\"message\":\"nope\"}")));
+		assertEquals("nope", e.getMessage());
+	}
+
+	@Test
+	public void plainTextBadRequestKeepsItsStatusAndCode() {
+		SalesforceRequestException e = assertThrows(SalesforceRequestException.class,
+				() -> handler.handleError(response(HttpStatus.BAD_REQUEST, "bad thing")));
+		assertEquals("400 Bad Request", e.getMessage());
+		assertEquals("UNKNOWN", e.getCode());
+	}
+
+	@Test
+	public void bodyThatIsNotAnObjectOrListOfObjectsCarriesNoDetail() {
+		for (String body : new String[] { "42", "\"text\"", "true", "null", "[1,2]", "[\"a\"]", "[[]]" }) {
+			InternalServerErrorException e = assertThrows(body, InternalServerErrorException.class,
+					() -> handler.handleError(response(HttpStatus.INTERNAL_SERVER_ERROR, body)));
+			assertEquals(body, "500 Internal Server Error", e.getMessage());
+		}
+	}
+
+	@Test
+	public void nonStringMessageIsConvertedToText() {
+		InternalServerErrorException e = assertThrows(InternalServerErrorException.class,
+				() -> handler.handleError(response(HttpStatus.INTERNAL_SERVER_ERROR, "[{\"errorCode\":\"X\",\"message\":42}]")));
+		assertEquals("42", e.getMessage());
+	}
+
+	@Test
+	public void quotedBadOAuthTokenIsRecognizedToo() {
+		InvalidAuthorizationException e = assertThrows(InvalidAuthorizationException.class,
+				() -> handler.handleError(response(HttpStatus.FORBIDDEN, "\"Bad_OAuth_Token\"\n")));
+		assertEquals("Invalid access token", e.getMessage());
 	}
 
 	@Test

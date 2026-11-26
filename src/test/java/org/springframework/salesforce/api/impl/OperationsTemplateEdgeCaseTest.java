@@ -366,6 +366,30 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 		assertEquals("v37.0", salesforce.apiOperations().getVersion());
 	}
 
+	// ---- Error responses through the full template ----
+
+	@Test
+	public void gatewayErrorWithAnEmptyBodyIsAMappedExceptionNotAnIoError() {
+		// This used to surface as a raw Jackson/IO exception wrapped by RestTemplate, with the status lost
+		mockServer.expect(requestTo(dataUrl() + "/query?q=SELECT%20Id%20FROM%20Account"))
+				.andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
+						.withStatus(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
+
+		assertThrows(org.springframework.salesforce.api.RateLimitExceededException.class,
+				() -> salesforce.queryOperations().query("SELECT Id FROM Account"));
+	}
+
+	@Test
+	public void gatewayErrorWithAnHtmlBodyKeepsItsStatus() {
+		mockServer.expect(requestTo(dataUrl() + "/sobjects/Account/001"))
+				.andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
+						.withStatus(org.springframework.http.HttpStatus.NOT_FOUND)
+						.contentType(MediaType.TEXT_HTML).body("<html>Not Found</html>"));
+
+		assertThrows(org.springframework.salesforce.api.ResourceNotFoundException.class,
+				() -> salesforce.sObjectsOperations().getRow("Account", "001"));
+	}
+
 	// ---- Authorization and instance URL guards ----
 
 	@Test
