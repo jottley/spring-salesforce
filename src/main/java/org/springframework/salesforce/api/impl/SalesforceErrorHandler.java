@@ -132,7 +132,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
                 return errorList.get(0);
             }
         } catch (JsonParseException e) {
-            //Salesforce is returning Bad_OAuth_Toekn in poorly formatted JSON.  We need to handle this case.
+            //Salesforce is returning Bad_OAuth_Token in poorly formatted JSON.  We need to handle this case.
             if (BAD_OAUTH_TOKEN.equals(new String(body)))
             {
                 Map<String, Object> errorDetails = new HashMap<>();
