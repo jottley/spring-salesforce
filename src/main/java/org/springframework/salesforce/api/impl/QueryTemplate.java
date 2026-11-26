@@ -57,11 +57,15 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
     public QueryResult nextPage(String pathOrToken) {
         requireAuthorization();
         if (pathOrToken.contains("/")) {
-            // Resolve against getBaseUrl() so the host matches the one the first page was fetched from.
+            // Take the host from getBaseUrl() so it matches the one the first page was fetched from.
             // getInstanceUrl() can be null (the template then falls back to its default host), which
             // would produce a "null/services/..." URL.
+            // The path is appended to the scheme and authority as text rather than resolved as a URI:
+            // resolving would let a value such as "//other.host/x" replace the host, and this request
+            // carries the bearer token.
+            URI base = URI.create(api.getBaseUrl());
             String path = pathOrToken.startsWith("/") ? pathOrToken : "/" + pathOrToken;
-            return restTemplate.getForObject(URI.create(api.getBaseUrl()).resolve(path).toString(), QueryResult.class);
+            return restTemplate.getForObject(base.getScheme() + "://" + base.getRawAuthority() + path, QueryResult.class);
         } else {
             return restTemplate.getForObject(api.getBaseUrl() + "/" + getVersion() + "/query/{token}", QueryResult.class, pathOrToken);
         }

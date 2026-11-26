@@ -15,6 +15,7 @@
  */
 package org.springframework.salesforce.api.impl;
 
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -166,6 +167,54 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 				.andRespond(withSuccess(page(3, true, null, "002"), MediaType.APPLICATION_JSON));
 
 		salesforce.queryOperations().nextPage("services/data/v37.0/query/01g-2000");
+
+		mockServer.verify();
+	}
+
+	@Test
+	public void nextPageCannotRedirectTheRequestToAnotherHostWithANetworkPathReference() {
+		// "//other.host/x" is a network-path reference. Resolving it as a URI would swap the host and
+		// send the bearer token there, so it must stay a path on the Salesforce host. Only the host is
+		// asserted: Spring may normalize repeated slashes in the path, which is not what matters here.
+		mockServer.expect(requestTo(startsWith("https://na7.salesforce.com/")))
+				.andExpect(method(GET))
+				.andRespond(withSuccess(page(1, true, null, "002"), MediaType.APPLICATION_JSON));
+
+		salesforce.queryOperations().nextPage("//other.host/x");
+
+		mockServer.verify();
+	}
+
+	@Test
+	public void nextPageCannotRedirectTheRequestToAnotherHostWithAnAbsoluteUrl() {
+		mockServer.expect(requestTo(startsWith("https://na7.salesforce.com/")))
+				.andExpect(method(GET))
+				.andRespond(withSuccess(page(1, true, null, "002"), MediaType.APPLICATION_JSON));
+
+		salesforce.queryOperations().nextPage("https://other.host/x");
+
+		mockServer.verify();
+	}
+
+	@Test
+	public void nextPageCannotChangeTheAuthorityWithUserInfoOrPortTricks() {
+		mockServer.expect(requestTo(startsWith("https://na7.salesforce.com/")))
+				.andExpect(method(GET))
+				.andRespond(withSuccess(page(1, true, null, "002"), MediaType.APPLICATION_JSON));
+
+		salesforce.queryOperations().nextPage("@other.host:8443/x");
+
+		mockServer.verify();
+	}
+
+	@Test
+	public void nextPageKeepsThePortOfAnInstanceUrlThatHasOne() {
+		salesforce.setInstanceUrl("https://sandbox.example.com:8443");
+		mockServer.expect(requestTo("https://sandbox.example.com:8443/services/data/v37.0/query/01g-2000"))
+				.andExpect(method(GET))
+				.andRespond(withSuccess(page(1, true, null, "002"), MediaType.APPLICATION_JSON));
+
+		salesforce.queryOperations().nextPage("/services/data/v37.0/query/01g-2000");
 
 		mockServer.verify();
 	}
