@@ -57,11 +57,13 @@ public class ChatterTemplate extends AbstractSalesForceOperations<Salesforce> im
     }
 
     @Override
+    @Deprecated
     public Status getStatus() {
         return getStatus("me");
     }
 
     @Override
+    @Deprecated
     public Status getStatus(String userId) {
         requireAuthorization();
 
@@ -81,11 +83,13 @@ public class ChatterTemplate extends AbstractSalesForceOperations<Salesforce> im
     }
 
     @Override
+    @Deprecated
     public Status updateStatus(String message) {
         return updateStatus("me", message);
     }
 
     @Override
+    @Deprecated
     public Status updateStatus(String userId, String message) {
         requireAuthorization();
 
