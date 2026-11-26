@@ -1,6 +1,6 @@
 {
   "currentPageToken" : 0,
-  "currentPageUrl" : "/services/data/v37.0/connect/communities/commId1/chatter/users",
+  "currentPageUrl" : "/services/data/v68.0/connect/communities/commId1/chatter/users",
   "nextPageToken" : null,
   "nextPageUrl" : null,
   "previousPageToken" : null,
@@ -19,7 +19,7 @@
     "bannerPhoto" : {
       "bannerPhotoUrl" : "https://na7.salesforce.com/profilephoto/003/C",
       "bannerPhotoVersionId" : null,
-      "url" : "/services/data/v37.0/connect/communities/commId1/user-profiles/commUserId1/banner-photo"
+      "url" : "/services/data/v68.0/connect/communities/commId1/user-profiles/commUserId1/banner-photo"
     },
     "chatterActivity" : {
       "commentCount" : 0,
@@ -70,13 +70,13 @@
       "photoVersionId" : null,
       "smallPhotoUrl" : "https://na7.salesforce.com/profilephoto/005/T",
       "standardEmailPhotoUrl" : "https://na7.salesforce.com/img/userprofile/default_profile_31_v1.png?fromEmail=1",
-      "url" : "/services/data/v37.0/connect/communities/commId1/user-profiles/commUserId1/photo"
+      "url" : "/services/data/v68.0/connect/communities/commId1/user-profiles/commUserId1/photo"
     },
     "reputation" : null,
     "thanksReceived" : null,
     "title" : null,
     "type" : "User",
-    "url" : "/services/data/v37.0/connect/communities/commId1/chatter/users/commUserId1",
+    "url" : "/services/data/v68.0/connect/communities/commId1/chatter/users/commUserId1",
     "userType" : "Internal",
     "username" : "mock-user@test.com"
   }]

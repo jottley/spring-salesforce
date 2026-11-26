@@ -43,7 +43,7 @@ public class QueryTemplateTest extends AbstractSalesforceTest {
         QueryResult result = salesforce.queryOperations().query("SELECT Id, Name, BillingCity FROM Account");
 
         assertEquals(12, result.getRecords().size());
-        assertEquals("/services/data/v37.0/query/01gD0000002HU6KIAW-2000", result.getNextRecordsUrl());
+        assertEquals("/services/data/v68.0/query/01gD0000002HU6KIAW-2000", result.getNextRecordsUrl());
         assertEquals("01gD0000002HU6KIAW-2000", result.getNextRecordsToken());
         for (ResultItem item : result.getRecords()) {
             assertEquals("Account", item.getType());
@@ -63,10 +63,10 @@ public class QueryTemplateTest extends AbstractSalesforceTest {
 
         assertEquals(2, result.getRecords().size());
         assertEquals("Contact", result.getRecords().get(0).getType());
-        assertEquals("/services/data/v37.0/sobjects/Contact/003A000000vF6QSIA0", result.getRecords().get(0).getUrl());
+        assertEquals("/services/data/v68.0/sobjects/Contact/003A000000vF6QSIA0", result.getRecords().get(0).getUrl());
         assertEquals("003A000000vF6QSIA0", result.getRecords().get(0).getAttributes().get("Id"));
         assertEquals("Contact", result.getRecords().get(1).getType());
-        assertEquals("/services/data/v37.0/sobjects/Contact/003A000000vF6QXIA0", result.getRecords().get(1).getUrl());
+        assertEquals("/services/data/v68.0/sobjects/Contact/003A000000vF6QXIA0", result.getRecords().get(1).getUrl());
         assertEquals("003A000000vF6QXIA0", result.getRecords().get(1).getAttributes().get("Id"));
     }
 
@@ -88,7 +88,7 @@ public class QueryTemplateTest extends AbstractSalesforceTest {
         assertEquals("Rose", result.getRecords().get(2).getAttributes().get("FirstName"));
         ResultItem roseAccount = (ResultItem) result.getRecords().get(2).getAttributes().get("Account");
         assertEquals("Account", roseAccount.getType());
-        assertEquals("/services/data/v37.0/sobjects/Account/001A000000df640IAA", roseAccount.getUrl());
+        assertEquals("/services/data/v68.0/sobjects/Account/001A000000df640IAA", roseAccount.getUrl());
         assertEquals("Edge Communications", roseAccount.getAttributes().get("Name"));
     }
 
@@ -131,12 +131,12 @@ public class QueryTemplateTest extends AbstractSalesforceTest {
         for (ResultItem item : result.getRecords()) {
             assertEquals("Account", item.getType());
         }
-        assertEquals("/services/data/v37.0/sobjects/Account/001A000000df63xIAA", result.getRecords().get(0).getUrl());
+        assertEquals("/services/data/v68.0/sobjects/Account/001A000000df63xIAA", result.getRecords().get(0).getUrl());
         assertEquals("GenePoint", result.getRecords().get(0).getAttributes().get("Name"));
         QueryResult genePointContacts = (QueryResult) result.getRecords().get(0).getAttributes().get("Contacts");
         assertEquals(1, genePointContacts.getRecords().size());
         assertEquals("Contact", genePointContacts.getRecords().get(0).getType());
-        assertEquals("/services/data/v37.0/sobjects/Contact/003A000000lGE0yIAG", genePointContacts.getRecords().get(0).getUrl());
+        assertEquals("/services/data/v68.0/sobjects/Contact/003A000000lGE0yIAG", genePointContacts.getRecords().get(0).getUrl());
         assertEquals("Frank", genePointContacts.getRecords().get(0).getAttributes().get("LastName"));
     }
 
@@ -151,7 +151,7 @@ public class QueryTemplateTest extends AbstractSalesforceTest {
 
         QueryResult result = salesforce.queryOperations().query("SELECT Id, Name, BillingCity FROM Account");
         String nextRecordsUrl = result.getNextRecordsUrl();
-        assertEquals("/services/data/v37.0/query/01gD0000002HU6KIAW-2000", nextRecordsUrl);
+        assertEquals("/services/data/v68.0/query/01gD0000002HU6KIAW-2000", nextRecordsUrl);
         salesforce.queryOperations().nextPage(nextRecordsUrl);
     }
 

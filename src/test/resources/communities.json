@@ -18,7 +18,7 @@
     "siteUrl" : "https://na7.salesforce.com/leiacommunity",
     "status" : "Live",
     "templateName" : "Customer Account Portal",
-    "url" : "/services/data/v37.0/connect/communities/commId1",
+    "url" : "/services/data/v68.0/connect/communities/commId1",
     "urlPathPrefix" : "leiacommunity"
   }, {
     "allowChatterAccessWithoutLogin" : false,
@@ -39,7 +39,7 @@
     "siteUrl" : "https://na7.salesforce.com/leiacommunity2",
     "status" : "Live",
     "templateName" : "Customer Account Portal",
-    "url" : "/services/data/v37.0/connect/communities/commId2",
+    "url" : "/services/data/v68.0/connect/communities/commId2",
     "urlPathPrefix" : "leiacommunity2"
   }, {
     "allowChatterAccessWithoutLogin" : false,
@@ -60,7 +60,7 @@
     "siteUrl" : "https://na7.salesforce.com/leiacommunity3",
     "status" : "Live",
     "templateName" : "Customer Account Portal",
-    "url" : "/services/data/v37.0/connect/communities/commId3",
+    "url" : "/services/data/v68.0/connect/communities/commId3",
     "urlPathPrefix" : "leiacommunity3"
   } ],
   "total" : 3

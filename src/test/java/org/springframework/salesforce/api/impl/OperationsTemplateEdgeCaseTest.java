@@ -59,7 +59,7 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 			if (!records.isEmpty()) {
 				records.append(',');
 			}
-			records.append("{\"attributes\":{\"type\":\"Account\",\"url\":\"/services/data/v37.0/sobjects/Account/")
+			records.append("{\"attributes\":{\"type\":\"Account\",\"url\":\"/services/data/v68.0/sobjects/Account/")
 					.append(id).append("\"},\"Id\":\"").append(id).append("\"}");
 		}
 		return "{\"totalSize\":" + total + ",\"done\":" + done
@@ -136,11 +136,11 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 
 	@Test
 	public void nextPageWithPathUsesInstanceUrl() {
-		mockServer.expect(requestTo("https://na7.salesforce.com/services/data/v37.0/query/01g-2000"))
+		mockServer.expect(requestTo("https://na7.salesforce.com/services/data/v68.0/query/01g-2000"))
 				.andExpect(method(GET))
 				.andRespond(withSuccess(page(3, true, null, "002"), MediaType.APPLICATION_JSON));
 
-		QueryResult result = salesforce.queryOperations().nextPage("/services/data/v37.0/query/01g-2000");
+		QueryResult result = salesforce.queryOperations().nextPage("/services/data/v68.0/query/01g-2000");
 
 		mockServer.verify();
 		assertEquals(1, result.getRecords().size());
@@ -151,11 +151,11 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 		// With no instance URL the template falls back to its default host for every request,
 		// so the continuation page must go to that host rather than a "null/..." URL.
 		salesforce.setInstanceUrl(null);
-		mockServer.expect(requestTo("https://na1.salesforce.com/services/data/v37.0/query/01g-2000"))
+		mockServer.expect(requestTo("https://na1.salesforce.com/services/data/v68.0/query/01g-2000"))
 				.andExpect(method(GET))
 				.andRespond(withSuccess(page(3, true, null, "002"), MediaType.APPLICATION_JSON));
 
-		QueryResult result = salesforce.queryOperations().nextPage("/services/data/v37.0/query/01g-2000");
+		QueryResult result = salesforce.queryOperations().nextPage("/services/data/v68.0/query/01g-2000");
 
 		mockServer.verify();
 		assertEquals(1, result.getRecords().size());
@@ -163,10 +163,10 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 
 	@Test
 	public void nextPageWithPathWithoutLeadingSlashIsStillAbsolute() {
-		mockServer.expect(requestTo("https://na7.salesforce.com/services/data/v37.0/query/01g-2000"))
+		mockServer.expect(requestTo("https://na7.salesforce.com/services/data/v68.0/query/01g-2000"))
 				.andRespond(withSuccess(page(3, true, null, "002"), MediaType.APPLICATION_JSON));
 
-		salesforce.queryOperations().nextPage("services/data/v37.0/query/01g-2000");
+		salesforce.queryOperations().nextPage("services/data/v68.0/query/01g-2000");
 
 		mockServer.verify();
 	}
@@ -210,11 +210,11 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 	@Test
 	public void nextPageKeepsThePortOfAnInstanceUrlThatHasOne() {
 		salesforce.setInstanceUrl("https://sandbox.example.com:8443");
-		mockServer.expect(requestTo("https://sandbox.example.com:8443/services/data/v37.0/query/01g-2000"))
+		mockServer.expect(requestTo("https://sandbox.example.com:8443/services/data/v68.0/query/01g-2000"))
 				.andExpect(method(GET))
 				.andRespond(withSuccess(page(1, true, null, "002"), MediaType.APPLICATION_JSON));
 
-		salesforce.queryOperations().nextPage("/services/data/v37.0/query/01g-2000");
+		salesforce.queryOperations().nextPage("/services/data/v68.0/query/01g-2000");
 
 		mockServer.verify();
 	}
@@ -235,8 +235,8 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 	public void queryAllFollowsNextRecordsUrlAndAggregatesRecords() {
 		mockServer.expect(requestTo(dataUrl() + "/query?q=SELECT%20Id%20FROM%20Account"))
 				.andRespond(withSuccess(
-						page(3, false, "/services/data/v37.0/query/01g-2000", "001", "002"), MediaType.APPLICATION_JSON));
-		mockServer.expect(requestTo("https://na7.salesforce.com/services/data/v37.0/query/01g-2000"))
+						page(3, false, "/services/data/v68.0/query/01g-2000", "001", "002"), MediaType.APPLICATION_JSON));
+		mockServer.expect(requestTo("https://na7.salesforce.com/services/data/v68.0/query/01g-2000"))
 				.andRespond(withSuccess(page(3, true, null, "003"), MediaType.APPLICATION_JSON));
 
 		QueryResult result = salesforce.queryOperations().queryAll("SELECT Id FROM Account");
@@ -363,7 +363,7 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 		assertThrows(InvalidSalesforceApiVersionException.class, () -> salesforce.apiOperations().setVersion(""));
 		assertThrows(InvalidSalesforceApiVersionException.class, () -> salesforce.apiOperations().setVersion("  "));
 		assertThrows(InvalidSalesforceApiVersionException.class, () -> salesforce.apiOperations().setVersion("latest"));
-		assertEquals("v37.0", salesforce.apiOperations().getVersion());
+		assertEquals("v68.0", salesforce.apiOperations().getVersion());
 	}
 
 	// ---- Error responses through the full template ----

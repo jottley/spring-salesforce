@@ -60,7 +60,7 @@ public class SObjectsTemplateTest extends AbstractSalesforceTest
         assertEquals("Account", sobjects.get(0).get("name"));
         assertEquals("Account", sobjects.get(0).get("label"));
         assertEquals("Accounts", sobjects.get(0).get("labelPlural"));
-        assertEquals("/services/data/v37.0/sobjects/Account", ((Map) sobjects.get(0).get("urls")).get("sobject"));
+        assertEquals("/services/data/v68.0/sobjects/Account", ((Map) sobjects.get(0).get("urls")).get("sobject"));
     }
 
     @Test
@@ -76,7 +76,7 @@ public class SObjectsTemplateTest extends AbstractSalesforceTest
         assertEquals(true, account.isUndeletable());
         assertEquals("001", account.getKeyPrefix());
         assertEquals(false, account.isCustom());
-        assertEquals("/services/data/v37.0/sobjects/Account/{ID}", account.getUrls().get("rowTemplate"));
+        assertEquals("/services/data/v68.0/sobjects/Account/{ID}", account.getUrls().get("rowTemplate"));
     }
 
     @Test

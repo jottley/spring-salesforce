@@ -234,7 +234,7 @@ public class SalesforceErrorHandlerTest {
 	@Test
 	public void handleErrorWithUrlAndMethodDelegates() {
 		assertThrows(ResourceNotFoundException.class, () -> handler.handleError(
-				URI.create("https://na7.salesforce.com/services/data/v37.0/sobjects/Account/001"), HttpMethod.GET,
+				URI.create("https://na7.salesforce.com/services/data/v68.0/sobjects/Account/001"), HttpMethod.GET,
 				response(HttpStatus.NOT_FOUND, error("NOT_FOUND", "gone"))));
 	}
 

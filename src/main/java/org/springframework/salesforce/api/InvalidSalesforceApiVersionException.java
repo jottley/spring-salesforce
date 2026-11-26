@@ -27,4 +27,15 @@ public class InvalidSalesforceApiVersionException
     {
         super(version + " is not a valid Salesforce Api version.");
     }
+
+    /**
+     * For a well-formed version that is older than the minimum this library supports.
+     *
+     * @param version the rejected version, for example {@code v30.0}
+     * @param minimum the lowest major version accepted, for example {@code 31}
+     */
+    public InvalidSalesforceApiVersionException(String version, int minimum)
+    {
+        super(version + " is below the minimum supported Salesforce Api version (v" + minimum + ".0).");
+    }
 }
