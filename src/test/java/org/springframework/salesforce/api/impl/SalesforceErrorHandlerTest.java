@@ -27,6 +27,7 @@ import java.util.List;
 import org.junit.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.salesforce.api.InsufficientPermissionException;
 import org.springframework.salesforce.api.InternalServerErrorException;
@@ -128,6 +129,22 @@ public class SalesforceErrorHandlerTest {
 		UncategorizedApiException e = assertThrows(UncategorizedApiException.class,
 				() -> handler.handleError(response(HttpStatus.I_AM_A_TEAPOT, error("X", "teapot"))));
 		assertEquals("teapot", e.getMessage());
+	}
+
+	@Test
+	public void nonStandardStatusMapsToUncategorizedWithSalesforceMessage() {
+		// 599 has no HttpStatus constant; this used to fail with a NullPointerException
+		UncategorizedApiException e = assertThrows(UncategorizedApiException.class, () -> handler
+				.handleError(new MockClientHttpResponse(error("X", "gateway trouble").getBytes(StandardCharsets.UTF_8),
+						HttpStatusCode.valueOf(599))));
+		assertEquals("gateway trouble", e.getMessage());
+	}
+
+	@Test
+	public void nonStandardStatusWithoutMessageNamesTheStatus() {
+		UncategorizedApiException e = assertThrows(UncategorizedApiException.class, () -> handler
+				.handleError(new MockClientHttpResponse("[]".getBytes(StandardCharsets.UTF_8), HttpStatusCode.valueOf(599))));
+		assertEquals("Unexpected HTTP status 599", e.getMessage());
 	}
 
 	@Test

@@ -63,6 +63,12 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
         Map<String, Object> errorDetails = extractErrorDetailsFromResponse(response);
 
         HttpStatus statusCode = HttpStatus.resolve(response.getStatusCode().value());
+        if (statusCode == null) {
+            // Not a standard HTTP status (for example 599 from a proxy), so it has no HttpStatus constant to switch on
+            String message = extractErrorMessage(errorDetails);
+            throw new UncategorizedApiException(
+                    message != null ? message : "Unexpected HTTP status " + response.getStatusCode().value());
+        }
         handleSalesforceError(statusCode, errorDetails);
         // No need for try-catch - handleSalesforceError will always throw an appropriate exception
     }
@@ -81,7 +87,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
                     "Rate limit exceeded"
                 );
             case INTERNAL_SERVER_ERROR -> throw new InternalServerErrorException(
-                    errorDetails == null ? "Contact Salesforce administrator." : extractErrorMessage(errorDetails)
+                    extractErrorMessage(errorDetails)
                 );
             case BAD_REQUEST, MULTIPLE_CHOICES -> throw new SalesforceRequestException(
                     errorDetails
@@ -98,10 +104,6 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
     }
 
     private void handleForbiddenError(Map<String, Object> errorDetails) {
-        if (errorDetails == null) {
-            throw new InsufficientPermissionException("Access forbidden - no details available");
-        }
-
         String message = extractErrorMessage(errorDetails);
 
         // A missing errorCode falls through to the default case rather than throwing a NullPointerException

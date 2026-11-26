@@ -76,10 +76,8 @@ public class ErrorHandler extends DefaultResponseErrorHandler {
     @Override
     public void handleError(@NonNull URI url, @NonNull HttpMethod method, @NonNull ClientHttpResponse response) throws IOException {
         if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+            // Always throws for a 400. If that ever changes, fall through to the default handling below.
             handleError(response);
-            // if not handled, fall through to default handling
-            super.handleError(url, method, response);
-            return;
         }
         super.handleError(url, method, response);
     }
