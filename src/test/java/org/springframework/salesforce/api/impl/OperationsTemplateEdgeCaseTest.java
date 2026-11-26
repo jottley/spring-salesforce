@@ -146,6 +146,31 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 	}
 
 	@Test
+	public void nextPageWithPathUsesTheSameHostAsTheFirstPageWhenNoInstanceUrlIsSet() {
+		// With no instance URL the template falls back to its default host for every request,
+		// so the continuation page must go to that host rather than a "null/..." URL.
+		salesforce.setInstanceUrl(null);
+		mockServer.expect(requestTo("https://na1.salesforce.com/services/data/v37.0/query/01g-2000"))
+				.andExpect(method(GET))
+				.andRespond(withSuccess(page(3, true, null, "002"), MediaType.APPLICATION_JSON));
+
+		QueryResult result = salesforce.queryOperations().nextPage("/services/data/v37.0/query/01g-2000");
+
+		mockServer.verify();
+		assertEquals(1, result.getRecords().size());
+	}
+
+	@Test
+	public void nextPageWithPathWithoutLeadingSlashIsStillAbsolute() {
+		mockServer.expect(requestTo("https://na7.salesforce.com/services/data/v37.0/query/01g-2000"))
+				.andRespond(withSuccess(page(3, true, null, "002"), MediaType.APPLICATION_JSON));
+
+		salesforce.queryOperations().nextPage("services/data/v37.0/query/01g-2000");
+
+		mockServer.verify();
+	}
+
+	@Test
 	public void nextPageWithTokenUsesQueryResource() {
 		mockServer.expect(requestTo(dataUrl() + "/query/01g-2000"))
 				.andExpect(method(GET))

@@ -50,10 +50,6 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
         requireAuthorization();
         URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl() + "/" + getVersion() + queryType).queryParam("q", query).build().toUri();
 
-        if (uri == null || StringUtils.isBlank(uri.toString())) {
-            throw new IllegalArgumentException("Query URI cannot be null or empty");
-        }
-
         return restTemplate.getForObject(uri, QueryResult.class);
     }
 
@@ -61,7 +57,11 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
     public QueryResult nextPage(String pathOrToken) {
         requireAuthorization();
         if (pathOrToken.contains("/")) {
-            return restTemplate.getForObject(api.getInstanceUrl() + pathOrToken, QueryResult.class);
+            // Resolve against getBaseUrl() so the host matches the one the first page was fetched from.
+            // getInstanceUrl() can be null (the template then falls back to its default host), which
+            // would produce a "null/services/..." URL.
+            String path = pathOrToken.startsWith("/") ? pathOrToken : "/" + pathOrToken;
+            return restTemplate.getForObject(URI.create(api.getBaseUrl()).resolve(path).toString(), QueryResult.class);
         } else {
             return restTemplate.getForObject(api.getBaseUrl() + "/" + getVersion() + "/query/{token}", QueryResult.class, pathOrToken);
         }
