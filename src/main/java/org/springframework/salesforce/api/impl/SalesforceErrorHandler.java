@@ -111,6 +111,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
     }
 
     @SuppressWarnings("unused")
+    @Deprecated
     private void handleUncategorizedError(@NonNull ClientHttpResponse response, Map<String, Object> errorDetails) {
         String message = (errorDetails == null || errorDetails.isEmpty())
             ? "No error details from Salesforce."
