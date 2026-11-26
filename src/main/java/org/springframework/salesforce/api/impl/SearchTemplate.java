@@ -16,14 +16,13 @@
 package org.springframework.salesforce.api.impl;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.salesforce.api.ResultItem;
 import org.springframework.salesforce.api.Salesforce;
 import org.springframework.salesforce.api.SearchOperations;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -48,14 +47,18 @@ public class SearchTemplate extends AbstractSalesForceOperations<Salesforce> imp
     @Override
     public List<ResultItem> search(String soslQuery) {
         requireAuthorization();
-        URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl() + "/" + getVersion() + "/search").queryParam("q", soslQuery).build().toUri();
+        URI uri = queryUri(api.getBaseUrl() + "/" + getVersion() + "/search", "q", soslQuery);
 
-        if (uri == null || StringUtils.isBlank(uri.toString())) {
-            throw new IllegalArgumentException("Query URI cannot be null or empty");
+        JsonNode root = restTemplate.getForObject(uri, JsonNode.class);
+
+        // API versions 31 through 36 return the records as a bare array. Version 37 and later return an object
+        // with the records under "searchRecords" (checked against a live org, every version from 31 to 68).
+        // Both are accepted, and no records at all gives an empty list.
+        JsonNode records = root != null && root.isObject() ? root.get("searchRecords") : root;
+        if (records == null || records.isNull()) {
+            return Collections.emptyList();
         }
-
-        JsonNode arr = restTemplate.getForObject(uri, JsonNode.class);
-        return api.readList(arr, ResultItem.class);
+        return api.readList(records, ResultItem.class);
     }
 
 }

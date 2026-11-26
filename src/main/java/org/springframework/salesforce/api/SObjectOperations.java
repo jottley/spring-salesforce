@@ -36,11 +36,18 @@ public interface SObjectOperations {
 
     public Map getRow(String name, String id, String... fields);
 
+    /**
+     * Reads a blob field (for example ContentVersion.VersionData or Attachment.Body) fully into memory
+     * and returns it as a stream. Prefer {@link #downloadBlob} for large content.
+     *
+     * @return a stream over the content; never null. It is empty if the field has no content.
+     */
     public InputStream getBlob(String name, String id, String field);
 
     /**
      * Streams a blob field (for example ContentVersion.VersionData or Attachment.Body) to the
      * given stream without holding the whole content in memory. The caller owns and closes the stream.
+     * Nothing is written if Salesforce responds with an error.
      *
      * @return the number of bytes written
      */

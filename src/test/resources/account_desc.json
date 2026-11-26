@@ -2357,10 +2357,10 @@
     "custom":false,
     "urls":{
         "uiEditTemplate":"https://na7.salesforce.com/{ID}/e",
-        "sobject":"/services/data/v37.0/sobjects/Account",
+        "sobject":"/services/data/v68.0/sobjects/Account",
         "uiDetailTemplate":"https://na7.salesforce.com/{ID}",
-        "describe":"/services/data/v37.0/sobjects/Account/describe",
-        "rowTemplate":"/services/data/v37.0/sobjects/Account/{ID}",
+        "describe":"/services/data/v68.0/sobjects/Account/describe",
+        "rowTemplate":"/services/data/v68.0/sobjects/Account/{ID}",
         "uiNewRecord":"https://na7.salesforce.com/001/e"
     },
     "searchable":true,

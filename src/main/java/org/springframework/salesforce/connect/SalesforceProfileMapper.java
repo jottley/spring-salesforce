@@ -115,6 +115,11 @@ public class SalesforceProfileMapper {
         return profile;
     }
 
+    /**
+     * @deprecated Salesforce retired the Chatter user status resource in API version 25, so this always fails.
+     */
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public void updateStatus(Salesforce salesforce, String message) {
         if (ObjectUtils.isEmpty(instanceUrl))
         {

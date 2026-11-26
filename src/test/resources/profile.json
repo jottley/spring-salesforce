@@ -8,7 +8,7 @@
     },
     "email":"umut.utkan@foo.com",
     "currentStatus":{
-        "url":"/services/data/v37.0/chatter/users/005A0000001cRuvIAE/status",
+        "url":"/services/data/v68.0/chatter/users/005A0000001cRuvIAE/status",
         "body":{
             "text":"",
             "messageSegments":[]
@@ -46,5 +46,5 @@
     "id":"005A0000001cRuvIAE",
     "username":"umut.utkan@foo.com",
     "type":"User",
-    "url":"/services/data/v37.0/chatter/users/005A0000001cRuvIAE"
+    "url":"/services/data/v68.0/chatter/users/005A0000001cRuvIAE"
 }

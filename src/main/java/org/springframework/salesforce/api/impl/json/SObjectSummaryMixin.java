@@ -55,7 +55,7 @@ public class SObjectSummaryMixin {
     @JsonProperty("labelPlural")
     String labelPlural;
 
-    @JsonProperty("layaoutable")
+    @JsonProperty("layoutable")
     boolean layoutable;
 
     @JsonProperty("activateable")
@@ -64,7 +64,7 @@ public class SObjectSummaryMixin {
     @JsonProperty("createable")
     boolean createable;
 
-    @JsonProperty("deprecatedAndHidded")
+    @JsonProperty("deprecatedAndHidden")
     boolean deprecatedAndHidden;
 
     @JsonProperty("customSetting")
@@ -85,7 +85,7 @@ public class SObjectSummaryMixin {
     @JsonProperty("replicateable")
     boolean replicateable;
 
-    @JsonProperty("retriveable")
+    @JsonProperty("retrieveable")
     boolean retrieveable;
 
     @JsonProperty("undeletable")

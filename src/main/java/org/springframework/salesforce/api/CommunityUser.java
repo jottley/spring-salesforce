@@ -15,6 +15,7 @@
  */
 package org.springframework.salesforce.api;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -106,6 +107,8 @@ public class CommunityUser {
         return isInThisCommunity;
     }
 
+    // Salesforce sends this as "isInThisCommunity"; the bean property name is "inThisCommunity"
+    @JsonAlias("isInThisCommunity")
     public void setInThisCommunity(boolean inThisCommunity) {
         isInThisCommunity = inThisCommunity;
     }

@@ -18,6 +18,8 @@ package org.springframework.salesforce.api.impl;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import static org.springframework.http.HttpMethod.GET;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,49 @@ public class SearchTemplateTest extends AbstractSalesforceTest {
         assertEquals("Contact", results.get(1).getType());
         assertEquals("Account", results.get(2).getType());
         assertEquals("Account", results.get(3).getType());
+    }
+
+    private static final String SEARCH_URL = "/search?q=FIND%20%7Bxxx*%7D%20IN%20ALL%20FIELDS";
+    private static final String SOSL = "FIND {xxx*} IN ALL FIELDS";
+
+    private void expectSearchResponse(org.springframework.test.web.client.response.DefaultResponseCreator response) {
+        mockServer.expect(requestTo("https://na7.salesforce.com/services/data/" + salesforce.apiOperations().getVersion() + SEARCH_URL))
+                .andExpect(method(GET))
+                .andRespond(response);
+    }
+
+    @Test
+    public void searchReadsTheCurrentApiResponseWhereRecordsAreUnderSearchRecords() {
+        // Live check against API v68.0: Salesforce answers with {"searchRecords":[...]}, not a bare array
+        expectSearchResponse(withStatus(HttpStatus.OK).body(loadResource("search-v68.json")).headers(responseHeaders));
+
+        List<ResultItem> results = salesforce.searchOperations().search(SOSL);
+
+        assertEquals(2, results.size());
+        assertEquals("Account", results.get(0).getType());
+        assertEquals("/services/data/v68.0/sobjects/Account/001A000000df63xIAA", results.get(0).getUrl());
+        assertEquals("001A000000df63xIAA", results.get(0).getAttributes().get("Id"));
+        assertEquals("Contact", results.get(1).getType());
+    }
+
+    @Test
+    public void searchWithNoHitsGivesAnEmptyListInEitherShape() {
+        for (String body : new String[] { "[]", "{\"searchRecords\":[]}", "{}", "{\"searchRecords\":null}" }) {
+            mockServer.reset();
+            expectSearchResponse(withStatus(HttpStatus.OK).body(body).headers(responseHeaders));
+
+            assertTrue(body, salesforce.searchOperations().search(SOSL).isEmpty());
+        }
+    }
+
+    @Test
+    public void searchWithAnEmptyResponseGivesAnEmptyListNotNull() {
+        expectSearchResponse(withStatus(HttpStatus.NO_CONTENT));
+
+        List<ResultItem> results = salesforce.searchOperations().search(SOSL);
+
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
     }
 
 }

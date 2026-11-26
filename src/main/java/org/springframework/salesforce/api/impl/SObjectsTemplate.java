@@ -18,11 +18,15 @@ package org.springframework.salesforce.api.impl;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -33,9 +37,8 @@ import org.springframework.salesforce.api.SObjectDetail;
 import org.springframework.salesforce.api.SObjectOperations;
 import org.springframework.salesforce.api.SObjectSummary;
 import org.springframework.salesforce.api.Salesforce;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -69,7 +72,7 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
     @Override
     public SObjectSummary getSObjectSummary(String name) {
         requireAuthorization();
-        JsonNode node = restTemplate.getForObject(api.getBaseUrl() + "/{version}/sobjects/{name}", JsonNode.class, getVersion(), name);
+        JsonNode node = restTemplate.getForObject(api.getBaseUrl() + "/{version}/sobjects/{name}", JsonNode.class, getVersion(), requirePathSegment("sObject name", name));
 
         if (node != null) {
             return api.readObject(node.get("objectDescribe"), SObjectSummary.class);
@@ -80,17 +83,23 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
     @Override
     public SObjectDetail describeSObject(String name) {
         requireAuthorization();
-        return restTemplate.getForObject(api.getBaseUrl() + "/{version}/sobjects/{name}/describe", SObjectDetail.class, getVersion(), name);
+        return restTemplate.getForObject(api.getBaseUrl() + "/{version}/sobjects/{name}/describe", SObjectDetail.class, getVersion(), requirePathSegment("sObject name", name));
     }
 
     @Override
     public Map getRow(String name, String id, String... fields) {
         requireAuthorization();
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(api.getBaseUrl() + "/" + getVersion() + "/sobjects/" + name + "/" + id);
-        if (fields.length > 0) {
-            builder.queryParam("fields", StringUtils.arrayToCommaDelimitedString(fields));
+        // Every caller-supplied piece is strictly percent-encoded, so none of it can add path segments or
+        // query parameters. Only the commas between field names stay literal.
+        StringBuilder url = new StringBuilder(api.getBaseUrl()).append('/').append(getVersion())
+                .append("/sobjects/").append(UriUtils.encode(requirePathSegment("sObject name", name), StandardCharsets.UTF_8))
+                .append('/').append(UriUtils.encode(requirePathSegment("record id", id), StandardCharsets.UTF_8));
+        if (fields != null && fields.length > 0) {
+            url.append("?fields=").append(Arrays.stream(fields)
+                    .map(field -> UriUtils.encode(field, StandardCharsets.UTF_8))
+                    .collect(Collectors.joining(",")));
         }
-        return restTemplate.getForObject(builder.build().toUri(), Map.class);
+        return restTemplate.getForObject(URI.create(url.toString()), Map.class);
     }
 
     @Override
@@ -100,9 +109,11 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         HttpEntity<String> entity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> response = restTemplate.exchange(
                     api.getBaseUrl() + "/{version}/sobjects/{name}/{id}/{field}", HttpMethod.GET, entity, byte[].class,
-                    getVersion(), name, id, field);
-        return new ByteArrayInputStream(response.getBody());
-
+                    getVersion(), requirePathSegment("sObject name", name), requirePathSegment("record id", id),
+                    requirePathSegment("field name", field));
+        // A blob with no content comes back as an empty (or 204) response, which RestTemplate reports as a null body
+        byte[] body = response.getBody();
+        return new ByteArrayInputStream(body != null ? body : new byte[0]);
     }
 
     @Override
@@ -111,7 +122,9 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         Long written = restTemplate.execute(
                 api.getBaseUrl() + "/{version}/sobjects/{name}/{id}/{field}", HttpMethod.GET, null,
                 response -> response.getBody().transferTo(out),
-                getVersion(), name, id, field);
+                getVersion(), requirePathSegment("sObject name", name), requirePathSegment("record id", id),
+                requirePathSegment("field name", field));
+        // RestTemplate.execute is declared nullable, although this extractor always returns a value
         return written == null ? 0L : written;
     }
 
@@ -122,7 +135,7 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map> entity = new HttpEntity<>(fields, headers);
-        return restTemplate.postForObject(api.getBaseUrl() + "/{version}/sobjects/{name}", entity, Map.class, getVersion(), name);
+        return restTemplate.postForObject(api.getBaseUrl() + "/{version}/sobjects/{name}", entity, Map.class, getVersion(), requirePathSegment("sObject name", name));
     }
 
     @Override
@@ -133,7 +146,7 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(fields, headers);
         @SuppressWarnings("unchecked")
         Map<String, Object> result =  restTemplate.postForObject(api.getBaseUrl() + "/{version}/sobjects/{sObjectName}/{sObjectId}?_HttpMethod=PATCH",
-                entity, Map.class, getVersion(), sObjectName, sObjectId);
+                entity, Map.class, getVersion(), requirePathSegment("sObject name", sObjectName), requirePathSegment("record id", sObjectId));
         // SF returns an empty body on success, so mimic the same update you'd get from a create success for consistency
         if (result == null) {
             result = new HashMap<>();
@@ -149,7 +162,8 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
     public void delete(String sObjectName, String sObjectId)
     {
         requireAuthorization();
-        restTemplate.delete(api.getBaseUrl() + "/{version}/sobjects/{sObjectName}/{sObjectId}", getVersion(), sObjectName, sObjectId);
+        restTemplate.delete(api.getBaseUrl() + "/{version}/sobjects/{sObjectName}/{sObjectId}", getVersion(),
+                requirePathSegment("sObject name", sObjectName), requirePathSegment("record id", sObjectId));
     }
 
 

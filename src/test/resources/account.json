@@ -6,9 +6,9 @@
         "keyPrefix":"001",
         "custom":false,
         "urls":{
-            "sobject":"/services/data/v37.0/sobjects/Account",
-            "describe":"/services/data/v37.0/sobjects/Account/describe",
-            "rowTemplate":"/services/data/v37.0/sobjects/Account/{ID}"
+            "sobject":"/services/data/v68.0/sobjects/Account",
+            "describe":"/services/data/v68.0/sobjects/Account/describe",
+            "rowTemplate":"/services/data/v68.0/sobjects/Account/{ID}"
         },
         "searchable":true,
         "labelPlural":"Accounts",

@@ -15,6 +15,7 @@
  */
 package org.springframework.salesforce.api.client;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -24,6 +25,7 @@ import static org.springframework.http.HttpMethod.POST;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.salesforce.api.Salesforce;
+import org.springframework.salesforce.api.impl.SalesforceTemplate;
 import org.springframework.salesforce.client.BaseSalesforceFactory;
 import org.springframework.test.web.client.MockRestServiceServer;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
@@ -53,6 +55,58 @@ public class BaseSalesforceFactoryTest {
         Salesforce template = new BaseSalesforceFactory("client-id", "client-secret", restTemplate)
                 .create("my-username", "my-password", "security-token");
         assertNotNull(template);
+    }
+
+    private Salesforce login(String tokenJson, String securityToken, String expectedPassword) {
+        RestTemplate restTemplate = new RestTemplate();
+        MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServer.expect(requestTo("https://login.salesforce.com/services/oauth2/token"))
+                .andExpect(content().string("grant_type=password&client_id=id&client_secret=secret&username=user&password="
+                        + expectedPassword))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(tokenJson));
+        Salesforce api = new BaseSalesforceFactory("id", "secret", restTemplate).create("user", "pw", securityToken);
+        mockServer.verify();
+        return api;
+    }
+
+    @Test
+    public void nullSecurityTokenIsOmittedFromPassword() {
+        login("{\"access_token\":\"t\"}", null, "pw");
+    }
+
+    @Test
+    public void instanceUrlFromTokenResponseIsApplied() {
+        Salesforce api = login("{\"access_token\":\"t\",\"instance_url\":\"https://na9.salesforce.com\"}", "", "pw");
+        assertEquals("https://na9.salesforce.com/services/data", ((SalesforceTemplate) api).getBaseUrl());
+    }
+
+    @Test
+    public void missingInstanceUrlKeepsTemplateDefault() {
+        Salesforce api = login("{\"access_token\":\"t\"}", "", "pw");
+        assertEquals("https://na1.salesforce.com/services/data", ((SalesforceTemplate) api).getBaseUrl());
+    }
+
+    @Test
+    public void customAuthorizeUrlIsUsedForLogin() {
+        RestTemplate restTemplate = new RestTemplate();
+        MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServer.expect(requestTo("https://test.salesforce.com/services/oauth2/token"))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body("{\"access_token\":\"t\"}"));
+        BaseSalesforceFactory factory = new BaseSalesforceFactory("id", "secret", restTemplate);
+        factory.setAuthorizeUrl("https://test.salesforce.com/services/oauth2/token");
+
+        factory.create("user", "pw", null);
+
+        mockServer.verify();
+        assertEquals("https://test.salesforce.com/services/oauth2/token", factory.getAuthorizeUrl());
+    }
+
+    @Test
+    public void authorizeUrlDefaultsToProduction() {
+        BaseSalesforceFactory factory = new BaseSalesforceFactory("id", "secret");
+        assertEquals("https://login.salesforce.com/services/oauth2/token", factory.getAuthorizeUrl());
+        factory.setAuthorizeUrl(null);
+        assertEquals("https://login.salesforce.com/services/oauth2/token", factory.getAuthorizeUrl());
     }
 
     protected Resource loadResource(String name) {

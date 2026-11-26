@@ -13,3 +13,4 @@ pom.xml.releaseBackup
 
 CLAUDE.md
 proposals/
+*.env

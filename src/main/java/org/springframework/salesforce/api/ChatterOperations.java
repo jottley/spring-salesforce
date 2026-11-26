@@ -41,7 +41,12 @@ public interface ChatterOperations {
      * Retrieves current user's status
      *
      * @return status
+     *
+     * @deprecated Salesforce retired the Chatter user status resource in API version 25, which is below this
+     *             library's minimum of v31.0, so this call always fails with a {@code ResourceNotFoundException}.
+     *             There is no replacement; it will be removed in a future major version.
      */
+    @Deprecated
     public Status getStatus();
 
     /**
@@ -49,7 +54,12 @@ public interface ChatterOperations {
      *
      * @param userId The salesforce Id of the user
      * @return status
+     *
+     * @deprecated Salesforce retired the Chatter user status resource in API version 25, which is below this
+     *             library's minimum of v31.0, so this call always fails with a {@code ResourceNotFoundException}.
+     *             There is no replacement; it will be removed in a future major version.
      */
+    @Deprecated
     public Status getStatus(String userId);
 
     /**
@@ -57,7 +67,12 @@ public interface ChatterOperations {
      *
      * @param message The message to be posted as the current user's status
      * @return status
+     *
+     * @deprecated Salesforce retired the Chatter user status resource in API version 25, which is below this
+     *             library's minimum of v31.0, so this call always fails with a {@code ResourceNotFoundException}.
+     *             There is no replacement; it will be removed in a future major version.
      */
+    @Deprecated
     public Status updateStatus(String message);
 
     /**
@@ -66,7 +81,12 @@ public interface ChatterOperations {
      * @param userId The salesforce Id of the user
      * @param message The message to be posted as the current user's status
      * @return status
+     *
+     * @deprecated Salesforce retired the Chatter user status resource in API version 25, which is below this
+     *             library's minimum of v31.0, so this call always fails with a {@code ResourceNotFoundException}.
+     *             There is no replacement; it will be removed in a future major version.
      */
+    @Deprecated
     public Status updateStatus(String userId, String message);
 
 }

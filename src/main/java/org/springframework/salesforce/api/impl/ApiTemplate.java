@@ -43,7 +43,8 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
     private String version;
 
 
-    String versionRegEx = "v[0-9][0-9]\\.[0-9]";
+    // Anchored so surrounding text is rejected, and capped at three digits so the major version always fits an int
+    private static final Pattern VERSION_PATTERN = Pattern.compile("^v(\\d{1,3})\\.\\d$");
 
 
     public ApiTemplate(Salesforce api, RestTemplate restTemplate) {
@@ -56,11 +57,6 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
     public List<ApiVersion> getVersions() {
         URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl()).build().toUri();
 
-        //Ensure URI is not null before making the call
-        if (uri == null) {
-            throw new IllegalStateException("Salesforce instance URL is null. Ensure that the connection is properly authorized.");
-        }
-
         JsonNode dataNode = restTemplate.getForObject(uri, JsonNode.class);
         return api.readList(dataNode, ApiVersion.class);
     }
@@ -69,6 +65,7 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
     @SuppressWarnings("unchecked")
     public Map<String, String> getServices(String version) {
         requireAuthorization();
+        validateVersion(version);
         return restTemplate.getForObject(api.getBaseUrl() + "/{version}", Map.class, version);
     }
 
@@ -82,14 +79,8 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
     public void setVersion(String version)
             throws InvalidSalesforceApiVersionException
     {
-        if (StringUtils.isNotBlank(version) && validateVersionString(version))
-        {
-            this.version = version;
-        }
-        else
-        {
-            throw new InvalidSalesforceApiVersionException(version);
-        }
+        validateVersion(version);
+        this.version = version;
     }
 
 
@@ -107,17 +98,21 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
     }
 
 
-    private boolean validateVersionString(String version)
+    /**
+     * Rejects anything that is not a well-formed version such as {@code v68.0}, and anything older than
+     * {@link ApiOperations#MINIMUM_API_VERSION}.
+     */
+    private void validateVersion(String version) throws InvalidSalesforceApiVersionException
     {
-        if (StringUtils.isNotBlank(version))
+        Matcher matcher = StringUtils.isBlank(version) ? null : VERSION_PATTERN.matcher(version);
+        if (matcher == null || !matcher.matches())
         {
-            Pattern pattern = Pattern.compile(versionRegEx);
-            Matcher matcher = pattern.matcher(version);
-
-            return matcher.find();
+            throw new InvalidSalesforceApiVersionException(version);
         }
-
-        return false;
+        if (Integer.parseInt(matcher.group(1)) < MINIMUM_API_VERSION)
+        {
+            throw new InvalidSalesforceApiVersionException(version, MINIMUM_API_VERSION);
+        }
     }
 
 }

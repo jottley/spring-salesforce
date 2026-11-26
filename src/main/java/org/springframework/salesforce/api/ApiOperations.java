@@ -26,7 +26,13 @@ import java.util.Map;
  */
 public interface ApiOperations {
 
-    static final String DEFAULT_API_VERSION = "v37.0";
+    static final String DEFAULT_API_VERSION = "v68.0";
+
+    /**
+     * The lowest Salesforce API version, as a major version number, that this library will use. Any
+     * request for an older version is rejected with an {@link InvalidSalesforceApiVersionException}.
+     */
+    static final int MINIMUM_API_VERSION = 31;
 
     List<ApiVersion> getVersions();
 

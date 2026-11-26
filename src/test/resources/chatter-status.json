@@ -1,5 +1,5 @@
 {
-    "url":"/services/data/v37.0/chatter/users/005A0000001cRuvIAE/status",
+    "url":"/services/data/v68.0/chatter/users/005A0000001cRuvIAE/status",
     "body":{
         "text":"I am also working on #hede",
         "messageSegments":[
@@ -8,7 +8,7 @@
                 "text":"I am also working on "
             },
             {
-                "url":"/services/data/v37.0/chatter/feed-items?q=%23hede",
+                "url":"/services/data/v68.0/chatter/feed-items?q=%23hede",
                 "tag":"hede",
                 "type":"Hashtag",
                 "text":"#hede"

@@ -57,7 +57,8 @@ public class ConnectTemplate extends AbstractSalesForceOperations<Salesforce> im
 
         requireAuthorization();
 
-        JsonNode dataNode = restTemplate.getForObject(api.getBaseUrl() + "/" + getVersion() + CONNECT_URI + communityId + CHATTER_USERS, JsonNode.class, getVersion());
+        JsonNode dataNode = restTemplate.getForObject(api.getBaseUrl() + "/{version}" + CONNECT_URI + "{communityId}" + CHATTER_USERS, JsonNode.class,
+                getVersion(), requirePathSegment("community id", communityId));
 
         if (dataNode == null || dataNode.isNull()) {
             return java.util.Collections.emptyList();

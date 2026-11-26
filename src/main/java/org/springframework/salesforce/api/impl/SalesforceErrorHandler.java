@@ -15,14 +15,13 @@
  */
 package org.springframework.salesforce.api.impl;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -39,11 +38,9 @@ import org.springframework.salesforce.api.SalesforceRequestException;
 import org.springframework.salesforce.api.UncategorizedApiException;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 
 /**
  * @author Umut Utkan
@@ -58,10 +55,24 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
     private static final String MESSAGE = "message";
     private static final String SESSION_EXPIRED_INVALID = "Invalid access token";
 
-    public void handleError(@NonNull ClientHttpResponse response) throws IOException {
-        Map<String, Object> errorDetails = extractErrorDetailsFromResponse(response);
+    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() { };
 
-        HttpStatus statusCode = HttpStatus.resolve(response.getStatusCode().value());
+    public void handleError(@NonNull ClientHttpResponse response) throws IOException {
+        int statusValue = response.getStatusCode().value();
+        HttpStatus statusCode = HttpStatus.resolve(statusValue);
+
+        // The HTTP status decides which exception is thrown. The body only supplies detail, and is often
+        // missing or not JSON (gateway errors, empty 503s, Apex REST custom bodies), so it must never
+        // prevent the status from being mapped.
+        Map<String, Object> errorDetails = extractErrorDetailsFromResponse(response);
+        Object message = errorDetails.get(MESSAGE);
+        errorDetails.put(MESSAGE, message != null ? message.toString() : fallbackMessage(statusCode, statusValue));
+
+        if (statusCode == null) {
+            // Not a standard HTTP status (for example 599 from a proxy), so it has no HttpStatus constant to switch on
+            throw new UncategorizedApiException(extractErrorMessage(errorDetails));
+        }
         handleSalesforceError(statusCode, errorDetails);
         // No need for try-catch - handleSalesforceError will always throw an appropriate exception
     }
@@ -69,6 +80,12 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
     @Override
     public void handleError(@NonNull URI url, @NonNull HttpMethod method, @NonNull ClientHttpResponse response) throws IOException {
         handleError(response);
+    }
+
+    private static String fallbackMessage(HttpStatus statusCode, int statusValue) {
+        return statusCode == null
+                ? "Unexpected HTTP status " + statusValue
+                : statusValue + " " + statusCode.getReasonPhrase();
     }
 
     private void handleSalesforceError(HttpStatus statusCode, Map<String, Object> errorDetails) {
@@ -80,7 +97,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
                     "Rate limit exceeded"
                 );
             case INTERNAL_SERVER_ERROR -> throw new InternalServerErrorException(
-                    errorDetails == null ? "Contact Salesforce administrator." : extractErrorMessage(errorDetails)
+                    extractErrorMessage(errorDetails)
                 );
             case BAD_REQUEST, MULTIPLE_CHOICES -> throw new SalesforceRequestException(
                     errorDetails
@@ -97,56 +114,52 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
     }
 
     private void handleForbiddenError(Map<String, Object> errorDetails) {
-        if (errorDetails == null) {
-            throw new InsufficientPermissionException("Access forbidden - no details available");
-        }
-
         String message = extractErrorMessage(errorDetails);
 
-        switch ((String) errorDetails.get(ERROR_CODE)) {
+        // A missing errorCode falls through to the default case rather than throwing a NullPointerException
+        switch (Objects.toString(errorDetails.get(ERROR_CODE), "")) {
             case BAD_OAUTH_TOKEN -> throw new InvalidAuthorizationException(message);
             case REQUEST_LIMIT_EXCEEDED -> throw new RateLimitExceededException(message);
             default -> throw new InsufficientPermissionException(message);
         }
     }
 
-    @SuppressWarnings("unused")
-    @Deprecated
-    private void handleUncategorizedError(@NonNull ClientHttpResponse response, Map<String, Object> errorDetails) {
-        String message = (errorDetails == null || errorDetails.isEmpty())
-            ? "No error details from Salesforce."
-            : extractErrorMessage(errorDetails);
-        throw new UncategorizedApiException(message);
-    }
-
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> extractErrorDetailsFromResponse(ClientHttpResponse response) throws IOException {
+    /**
+     * Reads whatever error detail the body offers. Salesforce normally sends a JSON array of error objects,
+     * but a single JSON object is accepted too. Anything else (empty, HTML, plain text) yields no detail
+     * rather than an error. The returned map is always mutable and never null.
+     */
+    private Map<String, Object> extractErrorDetailsFromResponse(ClientHttpResponse response) {
         //Extract the response body so that it can be reused.  The InputStream provided by the response is closed after single use.
-        byte[]  body = extractResponseBodyAsByteArray(response);
+        byte[] body = extractResponseBodyAsByteArray(response);
 
-        ObjectMapper mapper = new ObjectMapper(new JsonFactory());
+        String text = new String(body, StandardCharsets.UTF_8);
         try {
-            CollectionType listType = TypeFactory.defaultInstance().constructCollectionType(List.class, Map.class);
-            List<Map<String, Object>> errorList = (List<Map<String, Object>>) mapper.readValue(new ByteArrayInputStream(body), listType);
-            if (!errorList.isEmpty()) {
-                return errorList.get(0);
+            JsonNode root = JSON.readTree(body);
+            JsonNode error = root.isArray() && !root.isEmpty() ? root.get(0) : root;
+            if (error.isObject()) {
+                return new HashMap<>(JSON.convertValue(error, MAP_TYPE));
             }
-        } catch (JsonParseException e) {
-            //Salesforce is returning Bad_OAuth_Token in poorly formatted JSON.  We need to handle this case.
-            if (BAD_OAUTH_TOKEN.equals(new String(body)))
-            {
-                Map<String, Object> errorDetails = new HashMap<>();
-                errorDetails.put(ERROR_CODE, BAD_OAUTH_TOKEN);
-                errorDetails.put(MESSAGE, SESSION_EXPIRED_INVALID);
-
-                return errorDetails;
-            }
-
-            logger.error("Unable to parse salesforce response: {} ", new String(body));
-            throw new UncategorizedApiException("Unable to read salesforce response.");
+        } catch (IOException e) {
+            // Not JSON (a JsonProcessingException; reading an in-memory array cannot fail otherwise).
+            // The bare Bad_OAuth_Token case is handled below, anything else carries no detail.
         }
 
-        return Collections.emptyMap();
+        //Salesforce is returning Bad_OAuth_Token as a bare (sometimes quoted) string.  We need to handle this case.
+        String trimmed = text.trim();
+        if (BAD_OAUTH_TOKEN.equals(trimmed) || ("\"" + BAD_OAUTH_TOKEN + "\"").equals(trimmed)) {
+            Map<String, Object> errorDetails = new HashMap<>();
+            errorDetails.put(ERROR_CODE, BAD_OAUTH_TOKEN);
+            errorDetails.put(MESSAGE, SESSION_EXPIRED_INVALID);
+
+            return errorDetails;
+        }
+
+        if (logger.isDebugEnabled() && body.length > 0) {
+            logger.debug("Salesforce error response has no readable error detail: {}",
+                    text.length() > 500 ? text.substring(0, 500) + "..." : text);
+        }
+        return new HashMap<>();
     }
 
     private String extractErrorMessage(Map<String, Object> errorDetails) {
