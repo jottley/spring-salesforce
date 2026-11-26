@@ -36,6 +36,10 @@ It used to keep the first login for a username forever, even if you passed a new
 - `SObjectSummary` and `SObjectDetail`: `isLayoutable()`, `isDeprecatedAndHidden()` and `isRetrieveable()` were **always false**, because of misspelled JSON names. They now return Salesforce's values. If you serialize those models, the JSON names are now `layoutable`, `deprecatedAndHidden` and `retrieveable`.
 - `CommunityUser.isInThisCommunity()` was always false. It is now populated, and both `isInThisCommunity` and `inThisCommunity` are accepted.
 
+## Deprecated
+
+- `ChatterOperations.getStatus(...)` and `updateStatus(...)`, and `SalesforceProfileMapper.updateStatus`. Salesforce retired the user status resource in API 25, below this library's minimum of 31, so these always fail with `ResourceNotFoundException`. There is no replacement; they will be removed in a future major version.
+
 ## Bug fixes
 
 - **Queries containing `+` or `&` were altered.** `Email = 'a+b@x.com'` reached Salesforce as `a b@x.com`, and `Name = 'AT&T'` was cut at the `&`. Both are now sent intact, for SOQL and SOSL. Ordinary queries produce the same URL as before.
@@ -54,12 +58,12 @@ It used to keep the first login for a username forever, even if you passed a new
 
 - JaCoCo now runs on `mvn test`, and the **build fails below 85% instruction coverage**. This also applies to `mvn package` and the publish workflow (`mvn deploy`). The threshold is the `jacoco.minimum.instruction.coverage` property. CI uploads the coverage report and writes a summary.
 - Mockito moved from 2.11.0 to 5.24.0, test scope only.
-- Tests grew from 47 to 227 `@Test` methods.
+- Tests grew from 47 to 231 `@Test` methods.
+- A manual live check (`src/test/java/.../live/LiveSalesforceCheck.java`) runs the library against a real org. It is not part of `mvn test` and skips itself without credentials. See the README.
 - Dead code was removed from the query, search and API templates, the error handlers and the cache.
 
 ## Known limitations (not changed in this release)
 
-- **`ChatterOperations.getStatus` and `updateStatus` (and `SalesforceProfileMapper.updateStatus`) are now `@Deprecated`; they cannot work.** The user status resource they call was retired by Salesforce in API 25, below this library's minimum of 31, so Salesforce answers 404 (reported as `ResourceNotFoundException`).
 - **A 503 is always reported as `RateLimitExceededException`,** though it can also mean an outage. Chatter REST resources do return 503 when their hourly limit is exceeded.
 - With no instance URL set, requests still default to `https://na1.salesforce.com`. Failing fast instead would be a breaking change.
 - Building SOQL from untrusted input is still the caller's responsibility. The library only guarantees the text arrives unaltered.

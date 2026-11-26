@@ -1,5 +1,5 @@
 # Spring Salesforce
-Spring Salesforce is a Spring extension that provides connection support and API binding for Salesforces
+Spring Salesforce is a Spring extension that provides connection support and API binding for the Salesforce
 REST API.
 
 ## Usage
@@ -68,6 +68,9 @@ To include in your Maven project, use the following repository and dependency
     </dependencies>
 ```
 
+## API versions
+Requests use API version `v68.0` by default (`ApiOperations.DEFAULT_API_VERSION`). Call `salesforce.apiOperations().setVersion("v40.0")` to use another. Versions below `v31.0` are rejected with an `InvalidSalesforceApiVersionException`, and so is anything that is not of the form `v` plus a number, a dot and one digit.
+
 ## Supported Operations
  - Retrieve all available API versions
  - Retrieve services supported by a specific version of the API
@@ -83,13 +86,24 @@ To include in your Maven project, use the following repository and dependency
  - Run a SOQL query and retrieve the results (with paging or all)
    - query results can optionally include deleted records
  - Retrieve user profile
- - Retrieve user status
- - Update user status
  - List the limits of an org
  - Check the current API limit and usage
  - Get a list of Communities (Digital Experience)
  - Get a list of Community (Digital Experience) users
 
+The Chatter user status operations (`getStatus`, `updateStatus`) are deprecated: Salesforce retired that resource in API 25, so they always fail.
+
+## Checking against a real org
+`src/test/java/org/springframework/salesforce/live/LiveSalesforceCheck.java` is a manual check that exercises the library against a Salesforce org. It is not part of `mvn test` and skips itself without credentials. It reads by default; writes need `SF_ENABLE_WRITES=true` and only run against a sandbox, scratch org or Developer Edition org.
+
+```bash
+export SF_MY_DOMAIN_URL=https://yourdomain.my.salesforce.com
+export SF_CLIENT_ID=...
+export SF_CLIENT_SECRET=...
+mvn -Dtest=LiveSalesforceCheck -Djacoco.skip=true -DfailIfNoSpecifiedTests=false test
+```
+
+See the class comment for the optional variables (`SF_API_VERSION`, `SF_ENABLE_WRITES`, `SF_APEX_PATH`, `SF_PAGING_OBJECT`, `SF_ALLOW_WRITES_IN_PRODUCTION`).
 
 ## Historical Notes
 The project maintains part of the package naming for historical reasons. It should be thought of as deprecated and will eventually be removed. It is not associated with Spring beyond that; it leverages libraries from Spring and is intended to be used by projects that use the Spring framework.
