@@ -26,7 +26,6 @@ public class AbstractSalesForceOperations<T> {
 
     protected T api;
 
-
     public AbstractSalesForceOperations(T api) {
         this.api = api;
     }
@@ -38,9 +37,6 @@ public class AbstractSalesForceOperations<T> {
             throw new MissingAuthorizationException("API instance is null - authorization required");
         }
     }
-
-    protected static String BASE_URL = "https://na7.salesforce.com/services/data";
-
 
     public String getVersion()
     {
