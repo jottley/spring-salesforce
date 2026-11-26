@@ -45,32 +45,28 @@ public class ErrorHandler extends DefaultResponseErrorHandler {
     private static final String ERROR_DESCRIPTION = "error_description";
 
     public void handleError(@NonNull ClientHttpResponse response) throws IOException {
+
         if (response.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
-            //TODO move to a switch
             Map<String, String> error = extractErrorDetailsFromResponse(response);
-            if ("unsupported_response_type".equals(error.get(ERROR))) {
-                throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
-            } else if ("invalid_client_id".equals(error.get(ERROR))) {
-                throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
-            } else if ("invalid_request".equals(error.get(ERROR))) {
-                throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
-            } else if ("invalid_client_credentials".equals(error.get(ERROR))) {
-                throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
-            } else if ("invalid_grant".equals(error.get(ERROR))) {
-                if ("invalid user credentials".equals(error.get(ERROR_DESCRIPTION))) {
+
+            switch (error.get(ERROR)) {
+                case "unsupported_response_type" -> throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
+                case "invalid_client_id" -> throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
+                case "invalid_request" -> throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
+                case "invalid_client_credentials" -> throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
+                case "invalid_grant" -> {
+                    if ("invalid user credentials".equals(error.get(ERROR_DESCRIPTION))) {
+                        throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
+                    } else if ("IP restricted or invalid login hours".equals(error.get(ERROR_DESCRIPTION))) {
+                        throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
+                    }
                     throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
-                } else if ("IP restricted or invalid login hours".equals(error.get(ERROR_DESCRIPTION))) {
-                    throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
                 }
-                throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
-            } else if ("inactive_user".equals(error.get(ERROR))) {
-                throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
-            } else if ("inactive_org".equals(error.get(ERROR))) {
-                throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
-            } else if ("rate_limit_exceeded".equals(error.get(ERROR))) {
-                throw new RateLimitExceededException("Rate limit exceeded");
-            } else if ("invalid_scope".equals(error.get(ERROR))) {
-                throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
+                case "inactive_user" -> throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
+                case "inactive_org" -> throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
+                case "rate_limit_exceeded" -> throw new RateLimitExceededException("Rate limit exceeded");
+                case "invalid_scope" -> throw new InvalidAuthorizationException(error.get(ERROR_DESCRIPTION));
+                default -> throw new OperationNotPermittedException(error.get(ERROR_DESCRIPTION));
             }
         }
     }
