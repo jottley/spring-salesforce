@@ -16,6 +16,7 @@
 package org.springframework.salesforce.api.impl;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.salesforce.api.ResultItem;
@@ -48,8 +49,16 @@ public class SearchTemplate extends AbstractSalesForceOperations<Salesforce> imp
         requireAuthorization();
         URI uri = queryUri(api.getBaseUrl() + "/" + getVersion() + "/search", "q", soslQuery);
 
-        JsonNode arr = restTemplate.getForObject(uri, JsonNode.class);
-        return api.readList(arr, ResultItem.class);
+        JsonNode root = restTemplate.getForObject(uri, JsonNode.class);
+
+        // API versions 31 through 36 return the records as a bare array. Version 37 and later return an object
+        // with the records under "searchRecords" (checked against a live org, every version from 31 to 68).
+        // Both are accepted, and no records at all gives an empty list.
+        JsonNode records = root != null && root.isObject() ? root.get("searchRecords") : root;
+        if (records == null || records.isNull()) {
+            return Collections.emptyList();
+        }
+        return api.readList(records, ResultItem.class);
     }
 
 }
