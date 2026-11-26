@@ -53,4 +53,85 @@ public class LimitsTemplateTest extends AbstractSalesforceTest {
         assertEquals(15000, salesforce.limitsOperations().getDailyApiLimit());
     }
 
+    private LimitsOperationsTemplate limits() {
+        return (LimitsOperationsTemplate) salesforce.limitsOperations();
+    }
+
+    private void assertUsage(int used, int max) {
+        assertEquals(used, limits().getDailyApiUsed());
+        assertEquals(max, limits().getDailyApiLimit());
+    }
+
+    @Test
+    public void plainApiUsageHeaderIsParsed() {
+        limits().setCurrentDailyApiLimits("api-usage=39/15000");
+
+        assertUsage(39, 15000);
+    }
+
+    @Test
+    public void perAppApiUsageAfterApiUsageDoesNotBreakParsing() {
+        limits().setCurrentDailyApiLimits("api-usage=17/5000; per-app-api-usage=17/250(application=MyApp)");
+
+        assertUsage(17, 5000);
+    }
+
+    @Test
+    public void perAppApiUsageBeforeApiUsageIsSkipped() {
+        limits().setCurrentDailyApiLimits("per-app-api-usage=1/2(application=MyApp); api-usage=17/5000");
+
+        assertUsage(17, 5000);
+    }
+
+    @Test
+    public void whitespaceAroundTheEntriesIsTolerated() {
+        limits().setCurrentDailyApiLimits("  api-usage = 5 / 10  ;per-app-api-usage=1/2");
+
+        assertUsage(5, 10);
+    }
+
+    @Test
+    public void headerWithoutApiUsageKeepsPreviousValues() {
+        limits().setCurrentDailyApiLimits("api-usage=39/15000");
+
+        limits().setCurrentDailyApiLimits("per-app-api-usage=17/250(application=MyApp)");
+
+        assertUsage(39, 15000);
+    }
+
+    @Test
+    public void malformedHeadersAreIgnoredAndNeverThrow() {
+        limits().setCurrentDailyApiLimits("api-usage=39/15000");
+
+        for (String bad : new String[] { null, "", "   ", "api-usage", "api-usage=", "api-usage=5", "api-usage=a/b",
+                "api-usage=1/2/3", "api-usage=/", "api-usage=1/", "api-usage=99999999999/1", ";;;", "=", "garbage" }) {
+            limits().setCurrentDailyApiLimits(bad);
+            assertUsage(39, 15000);
+        }
+    }
+
+    @Test
+    public void aSuccessfulCallIsNotFailedByAnUnexpectedLimitInfoHeader() {
+        responseHeaders.set("Sforce-Limit-Info", "api-usage=17/5000; per-app-api-usage=17/250(application=MyApp)");
+        mockServer.expect(requestTo("https://na7.salesforce.com/services/data/" + salesforce.apiOperations().getVersion() + "/limits"))
+                .andExpect(method(GET))
+                .andRespond(withStatus(HttpStatus.OK).body(loadResource("limits.json")).headers(responseHeaders));
+
+        LimitsResults results = salesforce.limitsOperations().getLimits();
+
+        assertEquals(500, results.getHourlySyncReportRuns().getMax());
+        assertUsage(17, 5000);
+    }
+
+    @Test
+    public void aSuccessfulCallIsNotFailedByAMalformedLimitInfoHeader() {
+        responseHeaders.set("Sforce-Limit-Info", "api-usage=oops");
+        mockServer.expect(requestTo("https://na7.salesforce.com/services/data/" + salesforce.apiOperations().getVersion() + "/limits"))
+                .andExpect(method(GET))
+                .andRespond(withStatus(HttpStatus.OK).body(loadResource("limits.json")).headers(responseHeaders));
+
+        assertEquals(500, salesforce.limitsOperations().getLimits().getHourlySyncReportRuns().getMax());
+        assertUsage(0, 0);
+    }
+
 }
