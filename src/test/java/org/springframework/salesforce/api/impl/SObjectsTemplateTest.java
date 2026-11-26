@@ -164,7 +164,7 @@ public class SObjectsTemplateTest extends AbstractSalesforceTest
     }
 
     @Test
-    public void testUpdate() throws IOException
+    public void testUpdate()
     {
         // salesforce returns an empty body with a success code if no failures.
         // But, have to mock a json string to satisfy Mock Rest service.
