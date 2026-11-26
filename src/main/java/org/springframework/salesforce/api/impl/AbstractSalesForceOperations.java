@@ -56,6 +56,7 @@ public class AbstractSalesForceOperations<T> {
      * resource, so those, and blank values, are rejected before any request is made.
      *
      * @param what what the value is, for the error message
+     * @param value the value to check
      * @return the value, unchanged
      * @throws IllegalArgumentException if the value is null, blank, {@code .} or {@code ..}
      */
@@ -73,6 +74,11 @@ public class AbstractSalesForceOperations<T> {
      * as a space, and {@code &} ends the parameter, so a SOQL string such as {@code 'a+b@x.com'} or
      * {@code 'AT&T'} would be silently changed or cut off. Those two are escaped here; everything the builder
      * already encodes, and the characters it deliberately leaves alone, stay as before.
+     *
+     * @param url the URL without a query
+     * @param name the query parameter name
+     * @param value the query parameter value, for example a SOQL or SOSL string
+     * @return the URL with the parameter appended
      */
     protected static URI queryUri(String url, String name, String value) {
         URI built = UriComponentsBuilder.fromUriString(url).queryParam(name, value).build().toUri();
