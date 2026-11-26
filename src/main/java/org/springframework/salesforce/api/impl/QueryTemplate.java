@@ -22,7 +22,6 @@ import org.springframework.salesforce.api.QueryOperations;
 import org.springframework.salesforce.api.QueryResult;
 import org.springframework.salesforce.api.Salesforce;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Default implementation of QueryOperations.
@@ -48,7 +47,7 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
     public QueryResult query(String query, boolean includeDeletedItems) {
         String queryType = includeDeletedItems ? "/queryAll" : "/query";
         requireAuthorization();
-        URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl() + "/" + getVersion() + queryType).queryParam("q", query).build().toUri();
+        URI uri = queryUri(api.getBaseUrl() + "/" + getVersion() + queryType, "q", query);
 
         return restTemplate.getForObject(uri, QueryResult.class);
     }
@@ -56,6 +55,7 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
     @Override
     public QueryResult nextPage(String pathOrToken) {
         requireAuthorization();
+        requirePathSegment("query locator", pathOrToken);
         if (pathOrToken.contains("/")) {
             // Take the host from getBaseUrl() so it matches the one the first page was fetched from.
             // getInstanceUrl() can be null (the template then falls back to its default host), which

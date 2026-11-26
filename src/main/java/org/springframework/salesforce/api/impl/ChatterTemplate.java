@@ -53,7 +53,7 @@ public class ChatterTemplate extends AbstractSalesForceOperations<Salesforce> im
     public SalesforceProfile getUserProfile(String userId) {
         requireAuthorization();
 
-        return restTemplate.exchange(api.getBaseUrl() + "/{version}/chatter/users/{id}", HttpMethod.GET, new HttpEntity<>("",getChatterHeader()), SalesforceProfile.class, getVersion(), userId).getBody();
+        return restTemplate.exchange(api.getBaseUrl() + "/{version}/chatter/users/{id}", HttpMethod.GET, new HttpEntity<>("",getChatterHeader()), SalesforceProfile.class, getVersion(), requirePathSegment("user id", userId)).getBody();
     }
 
     @Override
@@ -65,7 +65,7 @@ public class ChatterTemplate extends AbstractSalesForceOperations<Salesforce> im
     public Status getStatus(String userId) {
         requireAuthorization();
 
-        JsonNode node = restTemplate.exchange(api.getBaseUrl() + "/{version}/chatter/users/{userId}/status", HttpMethod.GET, new HttpEntity<>("", getChatterHeader()), JsonNode.class, getVersion(), userId).getBody();
+        JsonNode node = restTemplate.exchange(api.getBaseUrl() + "/{version}/chatter/users/{userId}/status", HttpMethod.GET, new HttpEntity<>("", getChatterHeader()), JsonNode.class, getVersion(), requirePathSegment("user id", userId)).getBody();
 
         if (node == null || node.isNull()) {
             return null;
@@ -92,7 +92,7 @@ public class ChatterTemplate extends AbstractSalesForceOperations<Salesforce> im
         MultiValueMap<String, String> post = new LinkedMultiValueMap<>();
         post.add("text", message);
 
-        JsonNode node = restTemplate.exchange(api.getBaseUrl() + "/{version}/chatter/users/{userId}/status", HttpMethod.POST, new HttpEntity<>(post, getChatterHeader()), JsonNode.class, getVersion(), userId).getBody();
+        JsonNode node = restTemplate.exchange(api.getBaseUrl() + "/{version}/chatter/users/{userId}/status", HttpMethod.POST, new HttpEntity<>(post, getChatterHeader()), JsonNode.class, getVersion(), requirePathSegment("user id", userId)).getBody();
 
         if (node == null || node.isNull()) {
             return null;

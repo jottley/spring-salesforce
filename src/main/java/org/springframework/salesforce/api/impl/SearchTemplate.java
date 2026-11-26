@@ -22,7 +22,6 @@ import org.springframework.salesforce.api.ResultItem;
 import org.springframework.salesforce.api.Salesforce;
 import org.springframework.salesforce.api.SearchOperations;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -47,7 +46,7 @@ public class SearchTemplate extends AbstractSalesForceOperations<Salesforce> imp
     @Override
     public List<ResultItem> search(String soslQuery) {
         requireAuthorization();
-        URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl() + "/" + getVersion() + "/search").queryParam("q", soslQuery).build().toUri();
+        URI uri = queryUri(api.getBaseUrl() + "/" + getVersion() + "/search", "q", soslQuery);
 
         JsonNode arr = restTemplate.getForObject(uri, JsonNode.class);
         return api.readList(arr, ResultItem.class);
