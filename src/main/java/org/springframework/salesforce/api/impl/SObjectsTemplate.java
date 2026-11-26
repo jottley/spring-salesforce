@@ -101,8 +101,9 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         ResponseEntity<byte[]> response = restTemplate.exchange(
                     api.getBaseUrl() + "/{version}/sobjects/{name}/{id}/{field}", HttpMethod.GET, entity, byte[].class,
                     getVersion(), name, id, field);
-        return new ByteArrayInputStream(response.getBody());
-
+        // A blob with no content comes back as an empty (or 204) response, which RestTemplate reports as a null body
+        byte[] body = response.getBody();
+        return new ByteArrayInputStream(body != null ? body : new byte[0]);
     }
 
     @Override
@@ -112,6 +113,7 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
                 api.getBaseUrl() + "/{version}/sobjects/{name}/{id}/{field}", HttpMethod.GET, null,
                 response -> response.getBody().transferTo(out),
                 getVersion(), name, id, field);
+        // RestTemplate.execute is declared nullable, although this extractor always returns a value
         return written == null ? 0L : written;
     }
 
