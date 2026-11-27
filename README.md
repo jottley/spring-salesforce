@@ -28,9 +28,14 @@ Salesforce salesforce = provider.getApi(grant.getAccessToken());
 
 // 3. When the access token expires (requires the refresh_token scope)
 AccessGrant refreshed = oauth.refreshAccess(grant.getRefreshToken());
+
+// 4. On logout, revoke the refresh token (this also revokes the access tokens issued from it)
+oauth.revokeToken(grant.getRefreshToken());
 ```
 
 External Client Apps can require PKCE (it is the default for new apps), and Salesforce recommends it for every app, so pass the code challenge and the verifier as shown. If you send a challenge you must send the verifier, and the reverse. The older `buildAuthorizeUrl(redirectUri, scope, state)` and `exchangeForAccess(code, redirectUri)` still work for apps that do not require PKCE. If your app is a public client, create the client with a `null` secret and none is sent with the authorization-code and refresh requests; whether Salesforce accepts that depends on the app's settings. The library does not store the verifier; keep it between the redirect and the callback, as you do for `state`.
+
+`revokeToken` accepts an access token or a refresh token and throws `HttpClientErrorException` (a 400) if Salesforce refuses it. Revoking a token that is already revoked gave `error=unsupported_token_type` in a form-encoded body (not JSON) when checked against a live org. Code that does not care, such as a logout, can catch the exception and ignore it. The revoke URL is the token URL with `/token` replaced by `/revoke`.
 
 The redirect URI must match the one configured on the app. The `refresh_token` scope must be granted to receive a refresh token.
 

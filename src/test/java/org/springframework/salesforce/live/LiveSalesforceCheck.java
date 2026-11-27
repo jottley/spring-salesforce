@@ -61,7 +61,9 @@ import org.springframework.salesforce.api.Salesforce;
 import org.springframework.salesforce.api.SalesforceProfile;
 import org.springframework.salesforce.api.impl.SalesforceTemplate;
 import org.springframework.salesforce.connect.AccessGrant;
+import org.springframework.salesforce.connect.SalesforceOAuth2Client;
 import org.springframework.salesforce.connect.SalesforceServiceProvider;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -135,6 +137,10 @@ public class LiveSalesforceCheck {
   private String instanceUrl;
   private String gatewayUrl;
   private boolean authenticated;
+
+  /** The access token the run itself used; never printed. */
+  private String runToken;
+
   private String firstAccountId;
   private String firstAccountName;
 
@@ -157,6 +163,8 @@ public class LiveSalesforceCheck {
       writes();
     } finally {
       runCleanup();
+      // After the cleanup, because the token it revokes may be the one the run used
+      revocation();
       printReport();
     }
     long failed = results.stream().filter(r -> r.status() == Status.FAIL).count();
@@ -206,6 +214,7 @@ public class LiveSalesforceCheck {
           template.setAuthGatewayBaseUrl(gatewayUrl);
           api = template;
 
+          runToken = token;
           final String bearer = token;
           raw = new RestTemplate();
           raw.getInterceptors()
@@ -216,6 +225,71 @@ public class LiveSalesforceCheck {
                   });
           authenticated = true;
           return "authenticated with " + how;
+        });
+  }
+
+  /**
+   * Revokes a token and checks the org's answer. It only runs with client credentials, never with a
+   * supplied access token, so it cannot destroy a token the user brought. It runs after the cleanup
+   * because the client credentials flow may hand back the token the run itself used.
+   */
+  private void revocation() {
+    if (!authenticated) {
+      return;
+    }
+    optional(
+        "token revocation (client credentials only)",
+        () -> {
+          String clientId = env("SF_CLIENT_ID");
+          String clientSecret = env("SF_CLIENT_SECRET");
+          String myDomain = trimSlash(env("SF_MY_DOMAIN_URL"));
+          if (env("SF_ACCESS_TOKEN") != null
+              || clientId == null
+              || clientSecret == null
+              || myDomain == null) {
+            throw new Skip(
+                "needs SF_CLIENT_ID, SF_CLIENT_SECRET and SF_MY_DOMAIN_URL, and no SF_ACCESS_TOKEN");
+          }
+          SalesforceOAuth2Client oauth =
+              new SalesforceServiceProvider(
+                      clientId,
+                      clientSecret,
+                      myDomain + "/services/oauth2/authorize",
+                      myDomain + "/services/oauth2/token")
+                  .getOAuth2Client();
+          AccessGrant grant = oauth.clientCredentialsAccess(env("SF_SCOPE"));
+          String token = grant.getAccessToken();
+          secrets.add(token);
+          SalesforceTemplate probe = new SalesforceTemplate(token);
+          probe.setInstanceUrl(instanceUrl);
+          // The token works before it is revoked
+          probe.limitsOperations().getLimits();
+
+          oauth.revokeToken(token);
+
+          Exception afterwards = null;
+          try {
+            probe.limitsOperations().getLimits();
+          } catch (Exception e) {
+            afterwards = e;
+          }
+          assertNotNull("the revoked token still works", afterwards);
+          HttpClientErrorException again =
+              assertThrows(HttpClientErrorException.class, () -> oauth.revokeToken(token));
+          String body = again.getResponseBodyAsString();
+          return "revoked; a call with it then failed with "
+              + afterwards.getClass().getSimpleName()
+              + "; revoking again gave HTTP "
+              + again.getStatusCode().value()
+              + " "
+              + "body: "
+              + redact(body.replace("\n", " "))
+              + " (content type "
+              + again.getResponseHeaders().getContentType()
+              + ")"
+              + "; the token was "
+              + (token.equals(runToken) ? "" : "not ")
+              + "the one the run used";
         });
   }
 

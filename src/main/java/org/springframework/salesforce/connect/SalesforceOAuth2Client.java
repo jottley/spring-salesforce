@@ -46,6 +46,12 @@ public class SalesforceOAuth2Client {
   private final String accessTokenUrl;
 
   /**
+   * The OAuth2 token revocation endpoint URL, derived from the token URL; {@code null} if the token
+   * URL does not end with {@code /token}.
+   */
+  private final String revokeUrl;
+
+  /**
    * The {@code instance_url} from the most recent token response that contained one; {@code null}
    * until then. Never reset.
    */
@@ -72,6 +78,10 @@ public class SalesforceOAuth2Client {
     this.clientSecret = clientSecret;
     this.authorizeUrl = authorizeUrl;
     this.accessTokenUrl = accessTokenUrl;
+    this.revokeUrl =
+        accessTokenUrl != null && accessTokenUrl.endsWith("/token")
+            ? accessTokenUrl.substring(0, accessTokenUrl.length() - "/token".length()) + "/revoke"
+            : null;
     this.restTemplate = new RestTemplate();
   }
 
@@ -281,6 +291,44 @@ public class SalesforceOAuth2Client {
   }
 
   /**
+   * Revokes an access token or a refresh token. Revoking a refresh token also revokes the access
+   * tokens issued from it.
+   *
+   * <p>Only the token is sent; no client id or secret is needed. The token is revoked at the
+   * endpoint given by {@link #getRevokeUrl()}, which must be the host that issued it.
+   *
+   * <p>Salesforce answers {@code 200} on success. Revoking a token that is already revoked or
+   * invalid gives a {@code 400} whose body is form-encoded, not JSON, and was observed to be {@code
+   * error=unsupported_token_type&error_description=...} (Salesforce documents {@code invalid_token}
+   * too). The error is not hidden: it is thrown, and {@link
+   * org.springframework.web.client.HttpClientErrorException#getResponseBodyAsString()} returns that
+   * body. Code that does not care, such as a logout, can catch the exception and ignore it.
+   *
+   * @param token the access token or refresh token to revoke
+   * @throws IllegalArgumentException if the token is null or blank
+   * @throws IllegalStateException if the revoke URL could not be derived from the token URL
+   * @throws org.springframework.web.client.HttpClientErrorException if Salesforce returns an error
+   *     status (the default error handler is used, not {@link
+   *     org.springframework.salesforce.client.ErrorHandler}); the response body names the error
+   */
+  public void revokeToken(String token) {
+    if (token == null || token.isBlank()) {
+      throw new IllegalArgumentException("The token to revoke must not be blank");
+    }
+    if (revokeUrl == null) {
+      throw new IllegalStateException(
+          "The revoke URL cannot be derived: the token URL does not end with /token");
+    }
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+    MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+    parameters.add("token", token);
+
+    restTemplate.exchange(
+        revokeUrl, HttpMethod.POST, new HttpEntity<>(parameters, headers), Void.class);
+  }
+
+  /**
    * Posts the form parameters to the token endpoint and records the returned instance URL, if any.
    *
    * @param parameters the form parameters for the token request
@@ -354,6 +402,16 @@ public class SalesforceOAuth2Client {
    */
   public String getAccessTokenUrl() {
     return accessTokenUrl;
+  }
+
+  /**
+   * Returns the token revocation endpoint URL, which is the token URL with {@code /token} replaced
+   * by {@code /revoke}.
+   *
+   * @return the revoke URL, or {@code null} if the token URL does not end with {@code /token}
+   */
+  public String getRevokeUrl() {
+    return revokeUrl;
   }
 
   /**

@@ -16,9 +16,11 @@ package org.springframework.salesforce.connect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withNoContent;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -27,6 +29,7 @@ import org.junit.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.HttpClientErrorException;
 
 public class SalesforceOAuth2ClientTest {
 
@@ -287,6 +290,76 @@ public class SalesforceOAuth2ClientTest {
 
     blank.refreshAccess("ref");
     blankServer.verify();
+  }
+
+  private static final String REVOKE_URL =
+      "https://mydomain.my.salesforce.com/services/oauth2/revoke";
+
+  @Test
+  public void revokeUrlIsDerivedFromTheTokenUrl() {
+    assertEquals(REVOKE_URL, client.getRevokeUrl());
+    assertEquals(
+        "https://login.salesforce.com/services/oauth2/revoke",
+        new SalesforceServiceProvider("id", "secret").getOAuth2Client().getRevokeUrl());
+    assertEquals(
+        "https://test.salesforce.com/services/oauth2/revoke",
+        new SalesforceServiceProvider("id", "secret", true).getOAuth2Client().getRevokeUrl());
+  }
+
+  @Test
+  public void revokeTokenPostsOnlyTheEncodedToken() {
+    server
+        .expect(requestTo(REVOKE_URL))
+        .andExpect(method(HttpMethod.POST))
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_FORM_URLENCODED))
+        .andExpect(content().string("token=00Dxx%21AQ.a%2Fb%2Bc"))
+        .andRespond(withSuccess());
+
+    client.revokeToken("00Dxx!AQ.a/b+c");
+
+    server.verify();
+  }
+
+  @Test
+  public void revokeTokenDoesNotChangeTheInstanceUrl() {
+    server.expect(requestTo(REVOKE_URL)).andRespond(withSuccess());
+
+    client.revokeToken("tok");
+
+    assertNull(client.getInstanceUrl());
+  }
+
+  @Test
+  public void revokeTokenLetsAnErrorResponseThrough() {
+    server
+        .expect(requestTo(REVOKE_URL))
+        .andRespond(
+            // The body Salesforce sent for an already-revoked token: form-encoded, no content type
+            withBadRequest()
+                .body(
+                    "error=unsupported_token_type&error_description=this%20token%20type%20is%20not%20supported"));
+
+    HttpClientErrorException e =
+        assertThrows(HttpClientErrorException.class, () -> client.revokeToken("tok"));
+
+    assertTrue(
+        e.getResponseBodyAsString(),
+        e.getResponseBodyAsString().contains("error=unsupported_token_type"));
+  }
+
+  @Test
+  public void revokeTokenRejectsABlankToken() {
+    assertThrows(IllegalArgumentException.class, () -> client.revokeToken(null));
+    assertThrows(IllegalArgumentException.class, () -> client.revokeToken(" "));
+  }
+
+  @Test
+  public void revokeTokenNeedsATokenUrlItCanDeriveFrom() {
+    SalesforceOAuth2Client custom =
+        new SalesforceOAuth2Client("id", "secret", "https://x/authorize", "https://x/oauth");
+
+    assertNull(custom.getRevokeUrl());
+    assertThrows(IllegalStateException.class, () -> custom.revokeToken("tok"));
   }
 
   @Test
