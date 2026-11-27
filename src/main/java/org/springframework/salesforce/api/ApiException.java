@@ -17,13 +17,29 @@ package org.springframework.salesforce.api;
 
 /**
  * Base exception for Salesforce API errors.
+ * <p>
+ * This is an unchecked exception. Every Salesforce-specific failure raised by this library extends it, so
+ * catching {@code ApiException} handles all of them.
+ *
+ * @author Jared Ottley
  */
 public class ApiException extends RuntimeException {
 
+    /**
+     * Creates the exception with a detail message.
+     *
+     * @param message the detail message
+     */
     public ApiException(String message) {
         super(message);
     }
 
+    /**
+     * Creates the exception with a detail message and a cause.
+     *
+     * @param message the detail message
+     * @param cause the underlying cause
+     */
     public ApiException(String message, Throwable cause) {
         super(message, cause);
     }

@@ -18,27 +18,32 @@ package org.springframework.salesforce.api;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
 /**
+ * A single Salesforce org limit as returned by the Limits resource: the maximum
+ * allowed ({@code Max}) and the amount left ({@code Remaining}).
+ *
  * @author Jared Ottley
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LimitResult extends AbstractLimits {
 
+    /** Serialization version identifier. */
     private static final long serialVersionUID = 1L;
 
     /**
-     * No args constructor for use in serialization
-     *
+     * No args constructor for use in serialization.
      */
     public LimitResult() {
         super();
     }
 
     /**
+     * Creates a limit with the given values.
      *
-     * @param remaining
-     * @param max
+     * @param max the maximum amount allowed; must not be {@code null}
+     * @param remaining the amount remaining; must not be {@code null}
+     * @throws NullPointerException if {@code max} or {@code remaining} is {@code null}
      */
     public LimitResult(Integer max, Integer remaining) {
         super(max, remaining);

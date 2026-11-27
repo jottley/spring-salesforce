@@ -25,20 +25,32 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * Default implementation of RecentOperations.
+ * Default implementation of {@link RecentOperations}.
  *
  * @author Umut Utkan
  * @author Jared Ottley
  */
 public class RecentTemplate extends AbstractSalesForceOperations<Salesforce> implements RecentOperations {
 
+    /** The shared rest template used for requests. */
     private final RestTemplate restTemplate;
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the {@link Salesforce} instance this operations object belongs to
+     * @param restTemplate the shared rest template used for requests
+     */
     public RecentTemplate(Salesforce api, RestTemplate restTemplate) {
         super(api);
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Retrieves the items the user recently viewed or modified.
+     *
+     * @return the recent items
+     */
     @Override
     public List<ResultItem> recent() {
         return api.readList(restTemplate.getForObject(api.getBaseUrl() + "/" + getVersion() + "/recent", JsonNode.class), ResultItem.class);

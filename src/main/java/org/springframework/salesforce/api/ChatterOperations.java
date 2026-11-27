@@ -23,7 +23,7 @@ package org.springframework.salesforce.api;
 public interface ChatterOperations {
 
     /**
-     * Retrieves current users's profile
+     * Retrieves the current user's profile
      *
      * @return user profile
      */
@@ -32,19 +32,21 @@ public interface ChatterOperations {
     /**
      * Retrieves the given user's profile
      *
-     * @param userId The salesforce Id of the user
+     * @param userId the Salesforce Id of the user, or {@code me} for the current user
      * @return user profile
+     * @throws IllegalArgumentException if the user id is null, blank, {@code .} or {@code ..}
      */
     public SalesforceProfile getUserProfile(String userId);
 
     /**
      * Retrieves current user's status
      *
-     * @return status
+     * @return status, or null if none was returned
      *
      * @deprecated Salesforce retired the Chatter user status resource in API version 25, which is below this
-     *             library's minimum of v31.0, so this call always fails with a {@code ResourceNotFoundException}.
-     *             There is no replacement; it will be removed in a future major version.
+     *             library's minimum of v31.0, so this call is expected to be rejected by Salesforce (typically as a
+     *             {@code ResourceNotFoundException}); if a response without a status body is returned instead, the
+     *             result is null. There is no replacement; it will be removed in a future major version.
      */
     @Deprecated
     public Status getStatus();
@@ -52,12 +54,14 @@ public interface ChatterOperations {
     /**
      * Retrieves the given user's status
      *
-     * @param userId The salesforce Id of the user
-     * @return status
+     * @param userId the Salesforce Id of the user, or {@code me} for the current user
+     * @return status, or null if none was returned
+     * @throws IllegalArgumentException if the user id is null, blank, {@code .} or {@code ..}
      *
      * @deprecated Salesforce retired the Chatter user status resource in API version 25, which is below this
-     *             library's minimum of v31.0, so this call always fails with a {@code ResourceNotFoundException}.
-     *             There is no replacement; it will be removed in a future major version.
+     *             library's minimum of v31.0, so this call is expected to be rejected by Salesforce (typically as a
+     *             {@code ResourceNotFoundException}); if a response without a status body is returned instead, the
+     *             result is null. There is no replacement; it will be removed in a future major version.
      */
     @Deprecated
     public Status getStatus(String userId);
@@ -66,11 +70,12 @@ public interface ChatterOperations {
      * Updates current user's status with the given message
      *
      * @param message The message to be posted as the current user's status
-     * @return status
+     * @return status, or null if none was returned
      *
      * @deprecated Salesforce retired the Chatter user status resource in API version 25, which is below this
-     *             library's minimum of v31.0, so this call always fails with a {@code ResourceNotFoundException}.
-     *             There is no replacement; it will be removed in a future major version.
+     *             library's minimum of v31.0, so this call is expected to be rejected by Salesforce (typically as a
+     *             {@code ResourceNotFoundException}); if a response without a status body is returned instead, the
+     *             result is null. There is no replacement; it will be removed in a future major version.
      */
     @Deprecated
     public Status updateStatus(String message);
@@ -78,13 +83,15 @@ public interface ChatterOperations {
     /**
      * Updates the given user's status with the given message
      *
-     * @param userId The salesforce Id of the user
-     * @param message The message to be posted as the current user's status
-     * @return status
+     * @param userId the Salesforce Id of the user, or {@code me} for the current user
+     * @param message the message to be posted as that user's status
+     * @return status, or null if none was returned
+     * @throws IllegalArgumentException if the user id is null, blank, {@code .} or {@code ..}
      *
      * @deprecated Salesforce retired the Chatter user status resource in API version 25, which is below this
-     *             library's minimum of v31.0, so this call always fails with a {@code ResourceNotFoundException}.
-     *             There is no replacement; it will be removed in a future major version.
+     *             library's minimum of v31.0, so this call is expected to be rejected by Salesforce (typically as a
+     *             {@code ResourceNotFoundException}); if a response without a status body is returned instead, the
+     *             result is null. There is no replacement; it will be removed in a future major version.
      */
     @Deprecated
     public Status updateStatus(String userId, String message);

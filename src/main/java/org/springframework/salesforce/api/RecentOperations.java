@@ -24,6 +24,11 @@ import java.util.List;
  */
 public interface RecentOperations {
 
+    /**
+     * Retrieves the items the current user recently viewed or modified.
+     *
+     * @return the recent items, in the order Salesforce returns them
+     */
     List<ResultItem> recent();
 
 }

@@ -24,30 +24,50 @@ import org.springframework.salesforce.api.Salesforce;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Default implementation of the Limits API. Also includes tracking of the
- * current API usage as returned from salesforce in each API call in the
- * Sforce-Limit-Info header
+ * Default implementation of {@link LimitsOperations}. It also tracks the current daily API usage
+ * reported by Salesforce in the {@code Sforce-Limit-Info} header of each response.
  *
  * @author Jared Ottley
  */
 public class LimitsOperationsTemplate extends AbstractSalesForceOperations<Salesforce> implements LimitsOperations {
 
+    /** The shared rest template used for requests. */
     private final RestTemplate restTemplate;
+    /** Logger for unparseable usage data. */
     private static final Logger logger = LoggerFactory.getLogger(LimitsOperationsTemplate.class);
 
-    /** Used and max are replaced together so a reader on another thread never sees a mismatched pair. */
+    /**
+     * Used and max are replaced together so each getter reads a consistent used/max snapshot; reading the two
+     * getters separately is not atomic.
+     *
+     * @param used the API calls used so far
+     * @param max the daily API call limit
+     */
     private record Usage(int used, int max) {
     }
 
+    /** The most recent usage, replaced as a whole so used and max stay consistent. */
     private volatile Usage currentUsage = new Usage(0, 0);
 
+    /** Key of the daily API usage entry within the {@code Sforce-Limit-Info} header. */
     private static final String API_USAGE = "api-usage";
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the {@link Salesforce} instance this operations object belongs to
+     * @param restTemplate the shared rest template used for requests
+     */
     public LimitsOperationsTemplate(Salesforce api, RestTemplate restTemplate) {
         super(api);
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Retrieves the org limits.
+     *
+     * @return the limits
+     */
     @Override
     public LimitsResults getLimits() {
         requireAuthorization();
@@ -55,11 +75,21 @@ public class LimitsOperationsTemplate extends AbstractSalesForceOperations<Sales
                 LimitsResults.class, getVersion());
     }
 
+    /**
+     * Returns the daily API call limit from the most recent parseable {@code api-usage} entry.
+     *
+     * @return the limit, or 0 if no usage has been recorded
+     */
     @Override
     public int getDailyApiLimit() {
         return currentUsage.max();
     }
 
+    /**
+     * Returns the number of daily API calls used, from the most recent parseable {@code api-usage} entry.
+     *
+     * @return the calls used, or 0 if no usage has been recorded
+     */
     @Override
     public int getDailyApiUsed() {
         return currentUsage.used();
@@ -71,7 +101,11 @@ public class LimitsOperationsTemplate extends AbstractSalesForceOperations<Sales
      * {@code per-app-api-usage=17/250(application=MyApp)}; only {@code api-usage} is read.
      * <p>
      * A header that is missing, has no {@code api-usage} entry, or cannot be parsed is ignored and the
-     * previous values are kept. This is called for every response, so it must never throw.
+     * previous values are kept. Only the first {@code api-usage} entry is considered; if it is malformed the
+     * update is skipped and a later well-formed entry is not tried. This is called for every response that
+     * carries the header (only the first header value is passed), so it must never throw.
+     *
+     * @param limitInfo the header value
      */
     public void setCurrentDailyApiLimits(String limitInfo) {
         if (StringUtils.isBlank(limitInfo)) {
@@ -87,6 +121,12 @@ public class LimitsOperationsTemplate extends AbstractSalesForceOperations<Sales
         }
     }
 
+    /**
+     * Parses a {@code used/max} pair and records it, ignoring a value that cannot be parsed.
+     *
+     * @param usedAndMax the value of the {@code api-usage} entry
+     * @param limitInfo the whole header, for logging
+     */
     private void parseUsage(String usedAndMax, String limitInfo) {
         String[] parts = usedAndMax.split("/");
         try {

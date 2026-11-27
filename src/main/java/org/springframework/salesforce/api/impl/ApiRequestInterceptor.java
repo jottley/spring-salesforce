@@ -24,26 +24,40 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.jspecify.annotations.NonNull;
 
 /**
- * This class can be used to inspect and use the any request or response to the
- * Salesforce API.
- *
- * This class currently inspects the Sforce-Limit-Info header from Salesforce to
- * capture the current Daily API call usage after each API call.
+ * Request interceptor that inspects each response from the Salesforce API.
+ * <p>
+ * It reads the {@code Sforce-Limit-Info} header and passes it to the
+ * {@link LimitsOperationsTemplate} to record the current daily API usage after each call.
  *
  * @author Jared Ottley
- *
  */
 public class ApiRequestInterceptor implements ClientHttpRequestInterceptor {
 
     // The header will look like -> Sforce-Limit-Info: api-usage=39/15000
+    /** Name of the response header that carries the daily API usage. */
     private static final String SFORCE_LIMIT_INFO = "Sforce-Limit-Info";
 
+    /** The template whose limits operations record the usage. */
     private final SalesforceTemplate salesforceTemplate;
 
+    /**
+     * Creates the interceptor.
+     *
+     * @param salesforceTemplate the template whose limits operations receive the usage data
+     */
     public ApiRequestInterceptor(SalesforceTemplate salesforceTemplate) {
         this.salesforceTemplate = salesforceTemplate;
     }
 
+    /**
+     * Executes the request, then records the API usage reported in the response headers.
+     *
+     * @param request the request
+     * @param body the request body
+     * @param execution the execution chain
+     * @return the response
+     * @throws IOException if the request fails
+     */
     @Override
     public ClientHttpResponse intercept(@NonNull HttpRequest request, @NonNull byte[] body, @NonNull ClientHttpRequestExecution execution)
             throws IOException {
@@ -53,10 +67,10 @@ public class ApiRequestInterceptor implements ClientHttpRequestInterceptor {
     }
 
     /**
-     * Check response for the Sforce-Limit-Info header. Update the Limits Operations
-     * with the currently API usage
+     * Checks the response for the {@code Sforce-Limit-Info} header and, if present, updates the limits operations
+     * with the current API usage.
      *
-     * @param response
+     * @param response the response to inspect
      */
     private void processSForceLimitInfoHeader(ClientHttpResponse response) {
         if (response.getHeaders().get(SFORCE_LIMIT_INFO) != null) {

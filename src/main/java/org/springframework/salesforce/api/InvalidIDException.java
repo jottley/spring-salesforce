@@ -16,11 +16,21 @@
 package org.springframework.salesforce.api;
 
 /**
+ * Exception for an invalid Salesforce record id.
+ * <p>
+ * The library does not currently throw it itself; it is available to callers. Blank or unsafe record ids passed
+ * to {@link SObjectOperations} are rejected with an {@link IllegalArgumentException} instead.
+ *
  * @author Umut Utkan
  * @author Jared Ottley
  */
 public class InvalidIDException extends ApiException {
 
+    /**
+     * Creates the exception with a detail message.
+     *
+     * @param message the detail message
+     */
     public InvalidIDException(String message) {
         super(message);
     }

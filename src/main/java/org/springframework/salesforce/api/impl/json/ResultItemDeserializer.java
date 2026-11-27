@@ -29,18 +29,38 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Deserializer for {@link ResultItem}
+ * Deserializer for {@link ResultItem}. The {@code attributes} object supplies the type and URL; every other
+ * property becomes an attribute of the item, with nested objects converted to a {@link QueryResult} (when they
+ * contain {@code records}) or to another {@link ResultItem}.
  *
  * @author Umut Utkan
  */
 public class ResultItemDeserializer extends JsonDeserializer<ResultItem>
 {
 
+    /**
+     * Creates a deserializer for {@code ResultItem} values.
+     */
+    public ResultItemDeserializer() {
+    }
+
+    /** Name of the JSON property that holds the record type and URL. */
     public static final String ATTRIBUTES = "attributes";
+    /** Name of the property within {@code attributes} that holds the record type. */
     public static final String TYPE = "type";
+    /** Name of the property within {@code attributes} that holds the record URL. */
     public static final String URL = "url";
+    /** Name of the property that marks a nested object as a query result. */
     public static final String RECORDS = "records";
 
+    /**
+     * Reads a {@link ResultItem} from the JSON tree.
+     *
+     * @param jp the parser
+     * @param ctxt the deserialization context, whose configuration is reused for nested conversions
+     * @return the item
+     * @throws IOException if the JSON cannot be read
+     */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public ResultItem deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException

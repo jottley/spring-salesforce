@@ -32,7 +32,8 @@ import org.springframework.salesforce.api.Salesforce;
  * rather than reused. The password and token are not retained; only a digest is kept to
  * detect the change.
  * <p>
- * A failed login is never cached. Salesforce sessions can still expire while cached, so call
+ * A failed login is never cached, and a failed (or {@code null}) login for a username also discards that
+ * username's existing cached instance. Logins run while holding the cache lock, so they are serialized. Salesforce sessions can still expire while cached, so call
  * {@link #evict(String)} or {@link #clear()} to force a new login.
  *
  * @author Umut Utkan
@@ -40,19 +41,43 @@ import org.springframework.salesforce.api.Salesforce;
  */
 public class SimpleCachingSalesforceFactory implements SalesforceFactory {
 
+    /**
+     * A cached {@link Salesforce} instance together with the digest of the credentials that produced it.
+     *
+     * @param credentialDigest the digest of the password and security token used to log in
+     * @param salesforce the cached instance
+     */
     private record CacheEntry(String credentialDigest, Salesforce salesforce) {
     }
 
+    /** The factory used when no valid cached instance exists. */
     private final SalesforceFactory delegate;
 
+    /** Cached entries keyed by username; guarded by synchronizing on itself. */
     private final Map<String, CacheEntry> cache = new HashMap<>();
 
 
+    /**
+     * Creates a caching factory that logs in through the given delegate.
+     *
+     * @param delegate the factory used when no valid cached instance exists
+     */
     public SimpleCachingSalesforceFactory(SalesforceFactory delegate) {
         this.delegate = delegate;
     }
 
 
+    /**
+     * Returns the cached instance for the username if the credentials are unchanged; otherwise logs in
+     * through the delegate and caches the result (unless it is {@code null}).
+     *
+     * @param username the Salesforce username
+     * @param password the user's password
+     * @param securityToken the user's security token; may be {@code null}
+     * @return the cached or newly created instance, or {@code null} if the delegate returned {@code null}
+     *         (which is not cached)
+     * @throws RuntimeException whatever the delegate throws; nothing is cached in that case
+     */
     @Override
     public Salesforce create(String username, String password, String securityToken) {
         String digest = digest(password, securityToken);
@@ -74,6 +99,8 @@ public class SimpleCachingSalesforceFactory implements SalesforceFactory {
 
     /**
      * Removes the cached instance for the given username so the next {@link #create} logs in again.
+     *
+     * @param username the username to evict
      */
     public void evict(String username) {
         synchronized (this.cache) {
@@ -81,15 +108,22 @@ public class SimpleCachingSalesforceFactory implements SalesforceFactory {
         }
     }
 
-    /**
-     * Removes all cached instances.
-     */
+    /** Removes all cached instances. */
     public void clear() {
         synchronized (this.cache) {
             this.cache.clear();
         }
     }
 
+    /**
+     * Computes a SHA-256 digest of the password and security token so the cache can detect changed
+     * credentials without storing them.
+     *
+     * @param password the user's password; may be {@code null}
+     * @param securityToken the user's security token; may be {@code null}
+     * @return the digest as a hex string
+     * @throws IllegalStateException if SHA-256 is unavailable
+     */
     private static String digest(String password, String securityToken) {
         try {
             MessageDigest sha = MessageDigest.getInstance("SHA-256");

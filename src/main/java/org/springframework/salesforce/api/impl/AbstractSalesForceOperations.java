@@ -22,17 +22,33 @@ import org.springframework.salesforce.api.Salesforce;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
+ * Base class for the {@code *Template} operations implementations. It holds the API reference and
+ * provides a null check on the API instance ({@link #requireAuthorization()}, which does not inspect any
+ * token), version lookup and request-building helpers they share.
+ *
+ * @param <T> the type of the API instance, normally {@link Salesforce}
  * @author Umut Utkan
  * @author Jared Ottley
  */
 public class AbstractSalesForceOperations<T> {
 
+    /** The API instance these operations belong to. */
     protected T api;
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the API instance these operations belong to
+     */
     public AbstractSalesForceOperations(T api) {
         this.api = api;
     }
 
+    /**
+     * Checks that an API instance is present.
+     *
+     * @throws MissingAuthorizationException if the API instance is {@code null}
+     */
     protected void requireAuthorization() {
         // For now, we assume if we have an API instance, we're authorized
         // In a real implementation, you might want to check token validity
@@ -41,6 +57,11 @@ public class AbstractSalesForceOperations<T> {
         }
     }
 
+    /**
+     * Returns the API version currently configured on the {@link Salesforce} instance.
+     *
+     * @return the API version, for example {@code v68.0}
+     */
     public String getVersion()
     {
         return ((Salesforce)api).apiOperations().getVersion();

@@ -25,22 +25,30 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * {@link QueryResult}
+ * Jackson mixin that maps JSON properties onto {@link QueryResult}.
  *
  * @author Umut Utkan
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class QueryResultMixin {
 
+    /**
+     * Binds the constructor arguments of {@code QueryResult} to JSON properties.
+     *
+     * @param totalSize the JSON {@code totalSize} property
+     * @param done the JSON {@code done} property
+     */
     @JsonCreator
     QueryResultMixin(
             @JsonProperty("totalSize") int totalSize,
             @JsonProperty("done") boolean done) {
     }
 
+    /** Binds the JSON property {@code nextRecordsUrl} to {@code QueryResult.nextRecordsUrl}. */
     @JsonProperty("nextRecordsUrl")
     String nextRecordsUrl;
 
+    /** Binds the JSON property {@code records} to {@code QueryResult.records}. */
     @JsonProperty("records")
     List<ResultItem> records;
 

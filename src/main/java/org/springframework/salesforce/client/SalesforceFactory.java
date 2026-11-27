@@ -18,12 +18,21 @@ package org.springframework.salesforce.client;
 import org.springframework.salesforce.api.Salesforce;
 
 /**
- * Salesforce template factory for those who want to use salesforce with client login.
+ * Factory for {@link Salesforce} instances created by logging in with a username, password and optional security token.
  *
  * @author Umut Utkan
+ * @author Jared Ottley
  */
 public interface SalesforceFactory {
 
+    /**
+     * Creates a {@link Salesforce} instance by logging in with the given credentials.
+     *
+     * @param username the Salesforce username
+     * @param password the user's password
+     * @param securityToken the user's security token; may be {@code null}
+     * @return a new {@link Salesforce} instance
+     */
     Salesforce create(String username, String password, String securityToken);
 
 }

@@ -3,7 +3,7 @@
 
 	<groupId>org.springframework</groupId>
 	<artifactId>spring-salesforce</artifactId>
-	<version>2.0.1-SNAPSHOT</version>
+	<version>3.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>spring-salesforce</name>
@@ -157,12 +157,34 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${maven-javadoc-plugin.version}</version>
+                <configuration>
+                    <!-- Javadoc gate: every public and protected class and member must be documented, and the
+                         Javadoc must be valid. Any warning fails the build (this runs under "mvn package"). -->
+                    <doclint>all</doclint>
+                    <failOnWarnings>true</failOnWarnings>
+                    <failOnError>true</failOnError>
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <!-- Check only: the published Javadoc (above) documents public and protected members; this
+                             second pass includes private ones so they cannot go undocumented. The jar is not attached. -->
+                        <id>doclint-private-members</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <show>private</show>
+                            <classifier>doclint-private</classifier>
+                            <attach>false</attach>
+                            <outputDirectory>${project.build.directory}/doclint-private</outputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

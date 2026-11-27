@@ -22,10 +22,16 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 
 /**
- * {@link ResultItem}
+ * Jackson mixin that deserializes {@link ResultItem} with the {@link ResultItemDeserializer}.
  *
  * @author Umut Utkan
  */
 @JsonDeserialize(using = ResultItemDeserializer.class)
 public class ResultItemMixin {
+
+    /**
+     * Creates the mixin.
+     */
+    public ResultItemMixin() {
+    }
 }

@@ -24,13 +24,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 /**
- * {@link Photo}
+ * Jackson mixin that maps JSON properties onto {@link Photo}.
  *
  * @author Umut Utkan
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PhotoMixin {
 
+    /**
+     * Mirrors the property names of {@code Photo}. {@code Photo} has no matching two-argument constructor,
+     * so Jackson ignores this creator; {@code smallPhotoUrl} and {@code largePhotoUrl} are bound through
+     * the setters {@code setSmallPhotoUrl} and {@code setLargePhotoUrl}.
+     *
+     * @param smallPhotoUrl the small photo URL (the creator argument has no explicit JSON name and is never used)
+     * @param largePhotoUrl the large photo URL (the creator argument has no explicit JSON name and is never used)
+     */
     @JsonCreator
     PhotoMixin(
             @JsonProperty String smallPhotoUrl,

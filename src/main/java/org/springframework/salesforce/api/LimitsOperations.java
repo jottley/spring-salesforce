@@ -22,24 +22,26 @@ package org.springframework.salesforce.api;
  */
 public interface LimitsOperations {
 
-
     /**
-     * Retrieve the organization limits
+     * Retrieves the organization limits from the Salesforce Limits resource.
      *
-     * @return LimitsResults
+     * @return the organization limits
      */
     public LimitsResults getLimits();
 
     /**
-     * Get the current Daily API limit.  This value is returned in a header from Salesforce.  The value is persisted here after each API call.
-     * @return
+     * Gets the current Daily API limit. This value is read from the {@code Sforce-Limit-Info} header of the most
+     * recent response that carried an {@code api-usage} entry, so it is not updated by responses without one.
+     *
+     * @return the daily API request limit, or 0 if no such response has been seen yet
      */
     public int getDailyApiLimit();
 
-
     /**
-     * Get the current Daily API usage.  This value is returned in a header from Salesforce.  The value is persisted here after each API call.
-     * @return
+     * Gets the current Daily API usage. This value is read from the {@code Sforce-Limit-Info} header of the most
+     * recent response that carried an {@code api-usage} entry, so it is not updated by responses without one.
+     *
+     * @return the number of daily API requests used, or 0 if no such response has been seen yet
      */
     public int getDailyApiUsed();
 

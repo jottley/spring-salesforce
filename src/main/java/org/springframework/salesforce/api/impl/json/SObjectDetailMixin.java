@@ -26,28 +26,40 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * {@link SObjectDetail}
+ * Jackson mixin that maps JSON properties onto {@link SObjectDetail} (the sObject describe result), adding the detail properties to those of {@link SObjectSummaryMixin}.
  *
  * @author Umut Utkan
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SObjectDetailMixin extends SObjectSummaryMixin {
 
+    /**
+     * Creates the mixin.
+     */
+    public SObjectDetailMixin() {
+    }
+
+    /** Binds the JSON property {@code fields} to {@code SObjectDetail.fields}. */
     @JsonProperty("fields")
     List<Field> fields;
 
+    /** Binds the JSON property {@code childRelationships} to {@code SObjectDetail.childRelationships}. */
     @JsonProperty("childRelationships")
     List<Relationship> childRelationships;
 
+    /** Binds the JSON property {@code listviewable} to {@code SObjectDetail.listviewable}. */
     @JsonProperty("listviewable")
     boolean listviewable;
 
+    /** Binds the JSON property {@code lookupLayoutable} to {@code SObjectDetail.lookupLayoutable}. */
     @JsonProperty("lookupLayoutable")
     boolean lookupLayoutable;
 
+    /** Binds the JSON property {@code recordTypeInfos} to {@code SObjectDetail.recordTypeInfos}. */
     @JsonProperty("recordTypeInfos")
     List<RecordTypeInfo> recordTypeInfos;
 
+    /** Binds the JSON property {@code searchLayoutable} to {@code SObjectDetail.searchLayoutable}. */
     @JsonProperty("searchLayoutable")
     boolean searchLayoutable;
 

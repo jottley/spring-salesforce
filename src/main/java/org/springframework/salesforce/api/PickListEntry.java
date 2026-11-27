@@ -16,18 +16,33 @@
 package org.springframework.salesforce.api;
 
 /**
+ * A single entry of a picklist field, as reported in a Salesforce describe result.
+ *
  * @author Umut Utkan
+ * @author Jared Ottley
  */
 public class PickListEntry {
 
+    /** The API value of the entry. */
     private final String value;
 
+    /** Whether the entry is active. */
     private final boolean active;
 
+    /** The display label of the entry. */
     private final String label;
 
+    /** Whether the entry is the default selection. */
     private final boolean defaultValue;
 
+    /**
+     * Creates a picklist entry.
+     *
+     * @param value the API value of the entry
+     * @param label the display label of the entry
+     * @param active whether the entry is active
+     * @param defaultValue whether the entry is the default selection
+     */
     public PickListEntry(String value, String label, boolean active, boolean defaultValue) {
         this.value = value;
         this.active = active;
@@ -36,18 +51,38 @@ public class PickListEntry {
     }
 
 
+    /**
+     * Returns the API value of the entry.
+     *
+     * @return the entry value
+     */
     public String getValue() {
         return value;
     }
 
+    /**
+     * Returns whether the entry is active.
+     *
+     * @return {@code true} if the entry is active
+     */
     public boolean isActive() {
         return active;
     }
 
+    /**
+     * Returns the display label of the entry.
+     *
+     * @return the entry label
+     */
     public String getLabel() {
         return label;
     }
 
+    /**
+     * Returns whether the entry is the default selection.
+     *
+     * @return {@code true} if the entry is the default value
+     */
     public boolean isDefaultValue() {
         return defaultValue;
     }

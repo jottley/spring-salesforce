@@ -16,19 +16,34 @@
 package org.springframework.salesforce.api;
 
 /**
+ * Record type information for an sObject, as reported in a Salesforce describe result.
+ *
  * @author Umut Utkan
+ * @author Jared Ottley
  */
 public class RecordTypeInfo {
 
+    /** The record type name. */
     private final String name;
 
+    /** Whether the record type is available to the current user. */
     private final boolean available;
 
+    /** The record type ID. */
     private final String recordTypeId;
 
+    /** Whether this is the default record type mapping for the current user. */
     private final boolean defaultRecordTypeMapping;
 
 
+    /**
+     * Creates record type information.
+     *
+     * @param name the record type name
+     * @param available whether the record type is available to the current user
+     * @param recordTypeId the record type ID
+     * @param defaultRecordTypeMapping whether this is the default record type mapping for the current user
+     */
     public RecordTypeInfo(String name, boolean available, String recordTypeId, boolean defaultRecordTypeMapping) {
         this.name = name;
         this.available = available;
@@ -37,18 +52,38 @@ public class RecordTypeInfo {
     }
 
 
+    /**
+     * Returns the record type name.
+     *
+     * @return the record type name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Returns whether the record type is available to the current user.
+     *
+     * @return {@code true} if the record type is available
+     */
     public boolean isAvailable() {
         return available;
     }
 
+    /**
+     * Returns the record type ID.
+     *
+     * @return the record type ID
+     */
     public String getRecordTypeId() {
         return recordTypeId;
     }
 
+    /**
+     * Returns whether this is the default record type mapping for the current user.
+     *
+     * @return {@code true} if this is the default record type mapping
+     */
     public boolean isDefaultRecordTypeMapping() {
         return defaultRecordTypeMapping;
     }

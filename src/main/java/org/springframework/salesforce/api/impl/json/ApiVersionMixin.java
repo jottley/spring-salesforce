@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * {@link ApiVersion}
+ * Jackson mixin that maps JSON properties onto {@link ApiVersion}.
  *
  * @author Umut Utkan
  * @author Jared Ottley
@@ -30,6 +30,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ApiVersionMixin {
 
+    /**
+     * Binds the constructor arguments of {@code ApiVersion} to JSON properties.
+     *
+     * @param version the JSON {@code version} property
+     * @param label the JSON {@code label} property
+     * @param url the JSON {@code url} property
+     */
     @JsonCreator
     ApiVersionMixin(
             @JsonProperty("version") String version,

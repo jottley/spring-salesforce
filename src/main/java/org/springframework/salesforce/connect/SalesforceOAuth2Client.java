@@ -25,23 +25,37 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Salesforce OAuth2 client implementation using Spring Security OAuth2.
- *
- * Handles Salesforce-specific OAuth2 flow, including extracting the instance_url
- * from the token response.
+ * Salesforce OAuth2 client built on Spring's {@link RestTemplate}.
+ * <p>
+ * Handles the Salesforce-specific parts of the OAuth2 flows, including capturing the
+ * {@code instance_url} from the token response.
  *
  * @author Umut Utkan
  * @author Jared Ottley
  */
 public class SalesforceOAuth2Client {
 
+    /** The connected app consumer key. */
     private final String clientId;
+    /** The connected app consumer secret. */
     private final String clientSecret;
+    /** The OAuth2 authorization endpoint URL. */
     private final String authorizeUrl;
+    /** The OAuth2 token endpoint URL. */
     private final String accessTokenUrl;
+    /** The {@code instance_url} from the most recent token response that contained one; {@code null} until then. Never reset. */
     private String instanceUrl = null;
+    /** The rest template used for token requests; it uses Spring's default error handling, not {@link org.springframework.salesforce.client.ErrorHandler}. */
     private final RestTemplate restTemplate;
 
+    /**
+     * Creates a client for the given endpoints.
+     *
+     * @param clientId the connected app consumer key
+     * @param clientSecret the connected app consumer secret
+     * @param authorizeUrl the OAuth2 authorization endpoint URL
+     * @param accessTokenUrl the OAuth2 token endpoint URL
+     */
     public SalesforceOAuth2Client(String clientId, String clientSecret, String authorizeUrl, String accessTokenUrl) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
@@ -51,7 +65,13 @@ public class SalesforceOAuth2Client {
     }
 
     /**
-     * Build the authorization URL for the OAuth2 flow
+     * Builds the authorization URL for the authorization code flow.
+     *
+     * @param redirectUri the redirect URI; omitted if {@code null}
+     * @param scope the space-separated scopes; omitted if {@code null}
+     * @param state an opaque state value; omitted if {@code null}
+     * @return the URL to send the user to; parameter values are not URL-encoded, so encode any value containing
+     *         spaces or reserved characters (for example the scopes) before passing it
      */
     public String buildAuthorizeUrl(String redirectUri, String scope, String state) {
         org.springframework.web.util.UriComponentsBuilder builder =
@@ -71,7 +91,14 @@ public class SalesforceOAuth2Client {
     }
 
     /**
-     * Exchange authorization code for access token
+     * Exchanges an authorization code for an access token.
+     *
+     * @param authorizationCode the code returned to the redirect URI
+     * @param redirectUri the redirect URI used when authorizing; omitted if {@code null}
+     * @return the token response
+     * @throws org.springframework.web.client.RestClientException if the token endpoint returns an error status
+     *         or the request fails (the default error handler is used, not {@link org.springframework.salesforce.client.ErrorHandler})
+     * @throws IllegalStateException if the response has no body
      */
     public AccessGrant exchangeForAccess(String authorizationCode, String redirectUri) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -87,7 +114,13 @@ public class SalesforceOAuth2Client {
     }
 
     /**
-     * Refresh access token
+     * Obtains a new access token using a refresh token.
+     *
+     * @param refreshToken the refresh token
+     * @return the token response
+     * @throws org.springframework.web.client.RestClientException if the token endpoint returns an error status
+     *         or the request fails (the default error handler is used, not {@link org.springframework.salesforce.client.ErrorHandler})
+     * @throws IllegalStateException if the response has no body
      */
     public AccessGrant refreshAccess(String refreshToken) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -108,6 +141,10 @@ public class SalesforceOAuth2Client {
      * include a refresh token, so request a new token when the current one expires.
      *
      * @param scope optional space-separated scopes; null uses the scopes configured on the app
+     * @return the token response
+     * @throws org.springframework.web.client.RestClientException if the token endpoint returns an error status
+     *         or the request fails (the default error handler is used, not {@link org.springframework.salesforce.client.ErrorHandler})
+     * @throws IllegalStateException if the response has no body
      */
     public AccessGrant clientCredentialsAccess(String scope) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -122,8 +159,13 @@ public class SalesforceOAuth2Client {
     }
 
     /**
-     * Post request for access token
-     * Handles Salesforce's non-standard content type response
+     * Posts the form parameters to the token endpoint and records the returned instance URL, if any.
+     *
+     * @param parameters the form parameters for the token request
+     * @return the token response
+     * @throws org.springframework.web.client.RestClientException if the token endpoint returns an error status
+     *         or the request fails
+     * @throws IllegalStateException if the response has no body
      */
     protected AccessGrant postForToken(MultiValueMap<String, String> parameters) {
         HttpHeaders headers = new HttpHeaders();
@@ -150,26 +192,56 @@ public class SalesforceOAuth2Client {
         return accessGrant;
     }
 
+    /**
+     * Returns the instance URL from the most recent token response that contained one.
+     *
+     * @return the instance URL, or {@code null} if no token response has contained an {@code instance_url} yet
+     */
     public String getInstanceUrl() {
         return instanceUrl;
     }
 
+    /**
+     * Returns the consumer key.
+     *
+     * @return the client id
+     */
     public String getClientId() {
         return clientId;
     }
 
+    /**
+     * Returns the consumer secret.
+     *
+     * @return the client secret
+     */
     public String getClientSecret() {
         return clientSecret;
     }
 
+    /**
+     * Returns the authorization endpoint URL.
+     *
+     * @return the authorization URL
+     */
     public String getAuthorizeUrl() {
         return authorizeUrl;
     }
 
+    /**
+     * Returns the token endpoint URL.
+     *
+     * @return the token URL
+     */
     public String getAccessTokenUrl() {
         return accessTokenUrl;
     }
 
+    /**
+     * Returns the {@link RestTemplate} used for token requests.
+     *
+     * @return the rest template
+     */
     public RestTemplate getRestTemplate() {
         return restTemplate;
     }

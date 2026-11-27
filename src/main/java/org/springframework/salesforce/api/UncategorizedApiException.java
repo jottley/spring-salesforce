@@ -17,13 +17,29 @@ package org.springframework.salesforce.api;
 
 /**
  * Exception thrown when an API error occurs that doesn't fit into a specific category.
+ * <p>
+ * {@link org.springframework.salesforce.api.impl.SalesforceErrorHandler} throws it for any HTTP status that is
+ * not otherwise mapped, including non-standard statuses, and when the error response body cannot be read.
+ *
+ * @author Jared Ottley
  */
 public class UncategorizedApiException extends ApiException {
 
+    /**
+     * Creates the exception with a detail message.
+     *
+     * @param message the detail message
+     */
     public UncategorizedApiException(String message) {
         super(message);
     }
 
+    /**
+     * Creates the exception with a detail message and a cause.
+     *
+     * @param message the detail message
+     * @param cause the underlying cause
+     */
     public UncategorizedApiException(String message, Throwable cause) {
         super(message, cause);
     }

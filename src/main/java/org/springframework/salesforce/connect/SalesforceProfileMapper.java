@@ -22,7 +22,8 @@ import org.springframework.util.ObjectUtils;
 
 
 /**
- * Salesforce profile mapper for user profile and connection data.
+ * Maps a {@link Salesforce} connection to the user's details and profile, using a fixed instance URL
+ * or login gateway URL when one is configured.
  *
  * @author Umut Utkan
  * @author Jared Ottley
@@ -30,19 +31,33 @@ import org.springframework.util.ObjectUtils;
  */
 public class SalesforceProfileMapper {
 
+    /** The fixed instance URL used for the Chatter calls (test, profile, status), or {@code null} to use the connection's own. */
     private String instanceUrl = null;
+    /** The login gateway URL used for user details, or {@code null} to leave the connection's current gateway (production unless set earlier) in use. */
     private String gatewayUrl  = null;
 
+    /** Creates a mapper that uses the connection's own instance URL and current gateway (production unless one was set earlier). */
     public SalesforceProfileMapper()
     {
         //NOOP
     }
 
+    /**
+     * Creates a mapper that uses a fixed instance URL.
+     *
+     * @param instanceUrl the instance URL for the Chatter calls ({@link #test}, {@link #getUserProfile}, {@link #updateStatus}); user details are not affected
+     */
     public SalesforceProfileMapper(String instanceUrl)
     {
         this.instanceUrl = instanceUrl;
     }
 
+    /**
+     * Creates a mapper with a fixed instance URL, optionally using the sandbox gateway for user details.
+     *
+     * @param instanceUrl the instance URL for the Chatter calls ({@link #test}, {@link #getUserProfile}, {@link #updateStatus}); user details are not affected
+     * @param sandbox {@code true} to use the sandbox gateway for user details
+     */
     public SalesforceProfileMapper(String instanceUrl, boolean sandbox)
     {
         this.instanceUrl = instanceUrl;
@@ -53,6 +68,13 @@ public class SalesforceProfileMapper {
         }
     }
 
+    /**
+     * Creates a mapper with a fixed instance URL and gateway URL.
+     *
+     * @param instanceUrl the instance URL for the Chatter calls ({@link #test}, {@link #getUserProfile}, {@link #updateStatus}); user details are not affected
+     * @param gatewayUrl the login gateway URL for user details
+     * @deprecated use {@link #SalesforceProfileMapper(String, boolean)} instead
+     */
     @Deprecated
     public SalesforceProfileMapper(String instanceUrl, String gatewayUrl)
     {
@@ -60,6 +82,11 @@ public class SalesforceProfileMapper {
         this.gatewayUrl = gatewayUrl;
     }
 
+    /**
+     * Creates a mapper that optionally uses the sandbox gateway for user details.
+     *
+     * @param sandbox {@code true} to use the sandbox gateway
+     */
     public SalesforceProfileMapper(boolean sandbox)
     {
         if (sandbox)
@@ -68,6 +95,14 @@ public class SalesforceProfileMapper {
         }
     }
 
+    /**
+     * Tests whether the connection is usable by fetching the Chatter user profile.
+     * <p>
+     * Any exception is swallowed. If a fixed instance URL is configured, it is set on the connection as a side effect.
+     *
+     * @param salesforce the connection to test
+     * @return {@code true} if the profile request succeeded, {@code false} if it failed for any reason
+     */
     public boolean test(Salesforce salesforce)
     {
         try
@@ -88,6 +123,13 @@ public class SalesforceProfileMapper {
         }
     }
 
+    /**
+     * Retrieves the user's details from the configured gateway, or from the connection's current gateway
+     * (production unless one was set earlier) if none is configured.
+     *
+     * @param salesforce the connection to use
+     * @return the user details
+     */
     public SalesforceUserDetails getUserDetails(Salesforce salesforce) {
         SalesforceUserDetails userDetails;
         if (ObjectUtils.isEmpty(gatewayUrl))
@@ -101,6 +143,12 @@ public class SalesforceProfileMapper {
         return userDetails;
     }
 
+    /**
+     * Retrieves the user's Chatter profile, using the configured instance URL if there is one.
+     *
+     * @param salesforce the connection to use
+     * @return the user profile
+     */
     public SalesforceProfile getUserProfile(Salesforce salesforce) {
         SalesforceProfile profile;
 
@@ -116,7 +164,12 @@ public class SalesforceProfileMapper {
     }
 
     /**
+     * Updates the user's Chatter status, using the configured instance URL if there is one.
+     *
+     * @param salesforce the connection to use
+     * @param message the status text
      * @deprecated Salesforce retired the Chatter user status resource in API version 25, so this always fails.
+     *             There is no replacement; it will be removed in a future major version.
      */
     @Deprecated
     @SuppressWarnings("deprecation")

@@ -23,20 +23,32 @@ import org.springframework.salesforce.api.UserOperations;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Default implementation of UserOperations.
+ * Default implementation of {@link UserOperations}.
  *
  * @author Alexandra Leahu
  * @author Jared Ottley
  */
 public class UserOperationsTemplate extends AbstractSalesForceOperations<Salesforce> implements UserOperations {
 
+    /** The shared rest template used for requests. */
     private final RestTemplate restTemplate;
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the {@link Salesforce} instance this operations object belongs to
+     * @param restTemplate the shared rest template used for requests
+     */
     public UserOperationsTemplate(Salesforce api, RestTemplate restTemplate) {
         super(api);
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Retrieves the current user's details from the OAuth2 userinfo endpoint.
+     *
+     * @return the user details
+     */
     @Override
     public SalesforceUserDetails getSalesforceUserDetails() {
         requireAuthorization();

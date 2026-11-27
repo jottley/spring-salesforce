@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * {@link SalesforceProfile}
+ * Jackson mixin that maps JSON properties onto {@link SalesforceProfile}.
  *
  * @author Umut Utkan
  * @author Alexandra Leahu
@@ -31,6 +31,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SalesforceProfileMixin {
 
+    /**
+     * Mirrors the property names of {@code SalesforceProfile}. {@code SalesforceProfile} has no matching
+     * constructor, so Jackson ignores this creator; {@code id}, {@code email}, {@code firstName},
+     * {@code lastName}, {@code name} and {@code username} are set directly on the fields that Jackson infers
+     * from the getters. Only {@code photo} is bound explicitly, by the field annotation below.
+     *
+     * @param id the JSON {@code id} property
+     * @param firstName the JSON {@code firstName} property
+     * @param lastName the JSON {@code lastName} property
+     * @param email the JSON {@code email} property
+     * @param name the JSON {@code name} property
+     */
     @JsonCreator
     SalesforceProfileMixin(
             @JsonProperty("id") String id,
@@ -40,6 +52,7 @@ public class SalesforceProfileMixin {
             @JsonProperty("name") String name) {
     }
 
+    /** Binds the JSON property {@code photo} to {@code SalesforceProfile.photo}. */
     @JsonProperty("photo")
     Photo photo;
 

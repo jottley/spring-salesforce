@@ -16,13 +16,22 @@
 package org.springframework.salesforce.api;
 
 /**
+ * Exception thrown when a Salesforce API version is malformed or older than the minimum this library supports.
+ * <p>
+ * {@link ApiOperations#setVersion(String)} and {@link ApiOperations#getServices(String)} throw it for a blank
+ * version, a version not in the form {@code v68.0}, or a major version below
+ * {@link ApiOperations#MINIMUM_API_VERSION}.
  *
  * @author Jared Ottley
- *
  */
 public class InvalidSalesforceApiVersionException
         extends ApiException
 {
+    /**
+     * For a blank or malformed version.
+     *
+     * @param version the rejected version, which may be null or blank
+     */
     public InvalidSalesforceApiVersionException(String version)
     {
         super(version + " is not a valid Salesforce Api version.");

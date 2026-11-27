@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 
 /**
- * Jackson module for api version v23.0.
+ * Jackson module that registers the mixins used to map Salesforce JSON onto the API model classes.
  *
  * @author Umut Utkan
  * @author Jared Ottley
@@ -43,10 +43,16 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 public class SalesforceModule extends SimpleModule
 {
 
+    /** Creates the module. */
     public SalesforceModule() {
         super("SalesforceModule");
     }
 
+    /**
+     * Registers the mixins for the model classes.
+     *
+     * @param context the module setup context
+     */
     @Override
     public void setupModule(Module.SetupContext context) {
         super.setupModule(context);

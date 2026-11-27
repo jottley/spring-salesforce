@@ -24,13 +24,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 /**
- * {@link PickListEntry}
+ * Jackson mixin that maps JSON properties onto {@link PickListEntry}.
  *
  * @author Umut Utkan
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PickListEntryMixin {
 
+    /**
+     * Binds the constructor arguments of {@code PickListEntry} to JSON properties.
+     *
+     * @param value the JSON {@code value} property
+     * @param label the JSON {@code label} property
+     * @param active the JSON {@code active} property
+     * @param defaultValue the JSON {@code defaultValue} property
+     */
     @JsonCreator
     PickListEntryMixin(
             @JsonProperty("value") String value,

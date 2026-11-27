@@ -25,29 +25,47 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Default implementation of SalesforceFactory.
+ * Default {@link SalesforceFactory} that logs in with the OAuth2 username-password flow.
  *
  * @author Umut Utkan
  * @author Jared Ottley
  */
 public class BaseSalesforceFactory implements SalesforceFactory {
 
+    /** The production token endpoint URL; the initial value of the token URL field and the fallback of {@link #getAuthorizeUrl()}. */
     private static final String DEFAULT_AUTH_URL = SalesforceServiceProvider.PRODUCTION_GATEWAY_URL + SalesforceServiceProvider.TOKEN_PATH;
 
 
+    /** The connected app consumer key. */
     private final String clientId;
 
+    /** The connected app consumer secret. */
     private final String clientSecret;
 
+    /** The token endpoint URL used for logins (despite the name); {@link #create} posts to this field directly, so it must not be {@code null}. */
     private String authorizeUrl = DEFAULT_AUTH_URL;
 
+    /** The rest template used for the token request. */
     private final RestTemplate restTemplate;
 
 
+    /**
+     * Creates a factory with a default {@link RestTemplate} that uses {@link ErrorHandler}.
+     *
+     * @param clientId the connected app consumer key
+     * @param clientSecret the connected app consumer secret
+     */
     public BaseSalesforceFactory(String clientId, String clientSecret) {
         this(clientId, clientSecret, createRestTemplate());
     }
 
+    /**
+     * Creates a factory with the given {@link RestTemplate}.
+     *
+     * @param clientId the connected app consumer key
+     * @param clientSecret the connected app consumer secret
+     * @param restTemplate the rest template used for the token request
+     */
     public BaseSalesforceFactory(String clientId, String clientSecret, RestTemplate restTemplate) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
@@ -55,14 +73,44 @@ public class BaseSalesforceFactory implements SalesforceFactory {
     }
 
 
+    /**
+     * Sets the token endpoint URL used for logins (despite the method name, this is the token endpoint).
+     *
+     * @param authorizeUrl the token endpoint URL; do not pass {@code null}, because {@link #create} would then
+     *        post to a {@code null} URL and fail (only {@link #getAuthorizeUrl()} falls back to the default)
+     */
     public void setAuthorizeUrl(String authorizeUrl) {
         this.authorizeUrl = authorizeUrl;
     }
 
+    /**
+     * Returns the token endpoint URL used for logins.
+     *
+     * @return the configured URL, or the production token URL if none is set (note that {@link #create} does
+     *         not apply this fallback)
+     */
     public String getAuthorizeUrl() {
       return (this.authorizeUrl == null) ? DEFAULT_AUTH_URL : this.authorizeUrl;
     }
 
+    /**
+     * Logs in with the username-password flow and returns an API binding for the resulting token.
+     * The security token, if any, is appended to the password. The binding's instance URL is set from the
+     * response's {@code instance_url} when present.
+     *
+     * @param username the Salesforce username
+     * @param password the user's password
+     * @param securityToken the user's security token; may be {@code null}
+     * @return a new {@link Salesforce} instance
+     * @throws org.springframework.salesforce.api.InvalidAuthorizationException for a 400 response whose error
+     *         means the credentials or client were rejected (default rest template only)
+     * @throws org.springframework.salesforce.api.OperationNotPermittedException for other 400 responses (default
+     *         rest template only)
+     * @throws org.springframework.salesforce.api.RateLimitExceededException for a {@code rate_limit_exceeded}
+     *         400 response (default rest template only)
+     * @throws org.springframework.web.client.RestClientException for other failures; with a caller-supplied
+     *         rest template none of the {@link ErrorHandler} mapping applies unless that template installs it
+     */
     @Override
     @SuppressWarnings("unchecked")
     public Salesforce create(String username, String password, String securityToken) {
@@ -82,6 +130,11 @@ public class BaseSalesforceFactory implements SalesforceFactory {
         return template;
     }
 
+    /**
+     * Creates the default rest template, which reports OAuth2 errors through {@link ErrorHandler}.
+     *
+     * @return a new rest template
+     */
     private static RestTemplate createRestTemplate() {
         RestTemplate restTemplate = new RestTemplate();
         // Using default request factory - Spring will auto-detect the best available
