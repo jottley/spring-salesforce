@@ -1,6 +1,6 @@
 # Release notes (draft)
 
-**Version:** to be decided (the current version is `2.0.1-SNAPSHOT`).
+**Version:** 3.0.0 (the current version is `3.0.0-SNAPSHOT`).
 
 ## Upgrade notes: please read first
 
@@ -57,6 +57,7 @@ It used to keep the first login for a username forever, even if you passed a new
 ## Build and internal
 
 - JaCoCo now runs on `mvn test`, and the **build fails below 85% instruction coverage**. This also applies to `mvn package` and the publish workflow (`mvn deploy`). The threshold is the `jacoco.minimum.instruction.coverage` property. CI uploads the coverage report and writes a summary.
+- Every class and member, including private ones, now has Javadoc, and the build enforces it: `maven-javadoc-plugin` runs with `doclint=all` and `failOnWarnings`, so `mvn package` (and CI and the publish workflow) fails if new code is undocumented or has invalid Javadoc. A second, check-only pass includes private members; the published Javadoc still lists only public and protected members.
 - Mockito moved from 2.11.0 to 5.24.0, test scope only.
 - Tests grew from 47 to 231 `@Test` methods.
 - A manual live check (`src/test/java/.../live/LiveSalesforceCheck.java`) runs the library against a real org. It is not part of `mvn test` and skips itself without credentials. See the README.
