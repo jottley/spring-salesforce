@@ -17,9 +17,27 @@ package org.springframework.salesforce.api;
 
 import java.util.List;
 
+/**
+ * Defines operations for interacting with the Salesforce Connect (Communities /
+ * Digital Experience) API.
+ *
+ * @author Jared Ottley
+ */
 public interface ConnectOperations {
 
+    /**
+     * Retrieves the communities available to the current user.
+     *
+     * @return the communities
+     */
     List<Community> getCommunities();
 
+    /**
+     * Retrieves the users of a community.
+     *
+     * @param communityId the ID of the community
+     * @return the users of the community
+     * @throws IllegalArgumentException if the community id is null, blank, {@code .} or {@code ..}
+     */
     List<CommunityUser> getCommunityUsers(String communityId);
 }

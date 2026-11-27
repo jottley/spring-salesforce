@@ -21,7 +21,11 @@ import java.util.Objects;
 
 /**
  * Encapsulates the error response sent by Salesforce.
- * <br>
+ * <p>
+ * {@link org.springframework.salesforce.api.impl.SalesforceErrorHandler} throws it for an HTTP 400
+ * response, carrying the {@code message}, {@code errorCode} and {@code fields} from the error body. The handler
+ * also maps HTTP 300 to this exception, but only if it is called directly: Spring's default error check only
+ * routes 4xx and 5xx responses to the handler.
  *
  * @see <a
  *      href="http://www.salesforce.com/us/developer/docs/api/Content/sforce_api_calls_concepts_core_data_objects.htm">
@@ -32,17 +36,31 @@ import java.util.Objects;
  */
 public class SalesforceRequestException extends ApiException {
 
+    /** Serialization version identifier. */
     private static final long serialVersionUID = 7047374539651371668L;
 
+    /** The names of the fields the error relates to. */
     private final List<String> fields;
+    /** The Salesforce error code. */
     private final String code;
 
+    /**
+     * Creates the exception with a detail message only. {@link #getCode()} and {@link #getFields()} return null.
+     *
+     * @param message the detail message
+     */
     public SalesforceRequestException(String message) {
         super(message);
         this.code = null;
         this.fields = null;
     }
 
+    /**
+     * Creates the exception from the error object in a Salesforce error response.
+     *
+     * @param errorDetails the parsed error object; {@code message} is used as the detail message,
+     *            {@code errorCode} as the code ({@code UNKNOWN} if absent) and {@code fields} as the fields
+     */
     @SuppressWarnings("unchecked")
     public SalesforceRequestException(Map<String, Object> errorDetails) {
         super((String)errorDetails.get("message"));
@@ -51,10 +69,21 @@ public class SalesforceRequestException extends ApiException {
         this.fields = (List<String>) errorDetails.get("fields");
     }
 
+    /**
+     * Returns the names of the fields the error relates to.
+     *
+     * @return the field names, or null if Salesforce reported none or the exception was created from a message only
+     */
     public List<String> getFields() {
         return fields;
     }
 
+    /**
+     * Returns the Salesforce error code.
+     *
+     * @return the {@code errorCode} from the response, {@code UNKNOWN} if it was absent, or null if the exception
+     *         was created from a message only
+     */
     public String getCode() {
         return code;
     }

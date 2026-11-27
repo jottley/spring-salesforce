@@ -17,13 +17,31 @@ package org.springframework.salesforce.api;
 
 /**
  * Exception thrown when an operation is not permitted for the current user or organization.
+ * <p>
+ * {@link org.springframework.salesforce.client.ErrorHandler} throws it for an OAuth2 token error (HTTP 400) of
+ * {@code unsupported_response_type}, {@code invalid_request}, {@code inactive_user} or {@code inactive_org}, for
+ * an {@code invalid_grant} with the description {@code IP restricted or invalid login hours}, and for any
+ * unrecognized OAuth2 error.
+ *
+ * @author Jared Ottley
  */
 public class OperationNotPermittedException extends ApiException {
 
+    /**
+     * Creates the exception with a detail message.
+     *
+     * @param message the detail message
+     */
     public OperationNotPermittedException(String message) {
         super(message);
     }
 
+    /**
+     * Creates the exception with a detail message and a cause.
+     *
+     * @param message the detail message
+     * @param cause the underlying cause
+     */
     public OperationNotPermittedException(String message, Throwable cause) {
         super(message, cause);
     }

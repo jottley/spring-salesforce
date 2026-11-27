@@ -17,13 +17,28 @@ package org.springframework.salesforce.api;
 
 /**
  * Exception thrown when a requested resource is not found.
+ * <p>
+ * {@link org.springframework.salesforce.api.impl.SalesforceErrorHandler} throws it for an HTTP 404 response.
+ *
+ * @author Jared Ottley
  */
 public class ResourceNotFoundException extends ApiException {
 
+    /**
+     * Creates the exception with a detail message.
+     *
+     * @param message the detail message from Salesforce
+     */
     public ResourceNotFoundException(String message) {
         super(message);
     }
 
+    /**
+     * Creates the exception with a detail message and a cause.
+     *
+     * @param message the detail message from Salesforce
+     * @param cause the underlying cause
+     */
     public ResourceNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }

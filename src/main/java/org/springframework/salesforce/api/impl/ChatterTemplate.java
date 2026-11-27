@@ -30,25 +30,44 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 
 /**
- * Default implementation of ChatterOperations.
+ * Default implementation of {@link ChatterOperations}.
  *
  * @author Umut Utkan
  * @author Jared Ottley
  */
 public class ChatterTemplate extends AbstractSalesForceOperations<Salesforce> implements ChatterOperations {
 
+    /** The shared rest template used for requests. */
     private final RestTemplate restTemplate;
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the {@link Salesforce} instance this operations object belongs to
+     * @param restTemplate the shared rest template used for requests
+     */
     public ChatterTemplate(Salesforce api, RestTemplate restTemplate) {
         super(api);
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Retrieves the Chatter profile of the current user.
+     *
+     * @return the user profile
+     */
     @Override
     public SalesforceProfile getUserProfile() {
         return getUserProfile("me");
     }
 
+    /**
+     * Retrieves a user's Chatter profile.
+     *
+     * @param userId the user id, or {@code me} for the current user
+     * @return the user profile
+     * @throws IllegalArgumentException if the user id is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public SalesforceProfile getUserProfile(String userId) {
         requireAuthorization();
@@ -56,12 +75,26 @@ public class ChatterTemplate extends AbstractSalesForceOperations<Salesforce> im
         return restTemplate.exchange(api.getBaseUrl() + "/{version}/chatter/users/{id}", HttpMethod.GET, new HttpEntity<>("",getChatterHeader()), SalesforceProfile.class, getVersion(), requirePathSegment("user id", userId)).getBody();
     }
 
+    /**
+     * Retrieves the current user's Chatter status.
+     *
+     * @return the status, or {@code null} if there is none
+     * @deprecated Salesforce retired the Chatter user status resource in API version 25.
+     */
     @Override
     @Deprecated
     public Status getStatus() {
         return getStatus("me");
     }
 
+    /**
+     * Retrieves a user's Chatter status.
+     *
+     * @param userId the user id, or {@code me} for the current user
+     * @return the status, or {@code null} if there is none
+     * @throws IllegalArgumentException if the user id is null, blank, {@code .} or {@code ..}
+     * @deprecated Salesforce retired the Chatter user status resource in API version 25.
+     */
     @Override
     @Deprecated
     public Status getStatus(String userId) {
@@ -82,12 +115,28 @@ public class ChatterTemplate extends AbstractSalesForceOperations<Salesforce> im
         return api.readObject(body, Status.class);
     }
 
+    /**
+     * Updates the current user's Chatter status.
+     *
+     * @param message the status text
+     * @return the new status, or {@code null} if none was returned
+     * @deprecated Salesforce retired the Chatter user status resource in API version 25.
+     */
     @Override
     @Deprecated
     public Status updateStatus(String message) {
         return updateStatus("me", message);
     }
 
+    /**
+     * Updates a user's Chatter status.
+     *
+     * @param userId the user id, or {@code me} for the current user
+     * @param message the status text
+     * @return the new status, or {@code null} if none was returned
+     * @throws IllegalArgumentException if the user id is null, blank, {@code .} or {@code ..}
+     * @deprecated Salesforce retired the Chatter user status resource in API version 25.
+     */
     @Override
     @Deprecated
     public Status updateStatus(String userId, String message) {
@@ -110,6 +159,11 @@ public class ChatterTemplate extends AbstractSalesForceOperations<Salesforce> im
         return api.readObject(node.get("body"), Status.class);
     }
 
+    /**
+     * Builds the headers for Chatter requests, which turn off entity encoding.
+     *
+     * @return the headers
+     */
     public HttpHeaders getChatterHeader()
     {
         HttpHeaders headers = new HttpHeaders();

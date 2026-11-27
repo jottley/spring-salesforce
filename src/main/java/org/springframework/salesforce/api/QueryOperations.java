@@ -34,19 +34,31 @@ public interface QueryOperations {
      * Execute SOQL query and return the first page of results
      *
      * @param query The SOQL query to execute
-     * @param includeDeletedItems if result should include deleted items
-     * documentation https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/dome_queryall.htm
+     * @param includeDeletedItems {@code true} to also return deleted and archived records, by using the
+     *            {@code queryAll} resource instead of {@code query}
      * @return QueryResult
+     * @see <a href="https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/dome_queryall.htm">QueryAll</a>
      */
     QueryResult query(String query, boolean includeDeletedItems);
 
-    /*
-     * Retrieve next page of results based on argument from url (usually from query result "nextRecordsUrl")
+    /**
+     * Retrieves the next page of a query result.
+     * <p>
+     * The argument is usually the {@code nextRecordsUrl} of the previous {@link QueryResult}, a path such as
+     * {@code /services/data/v68.0/query/01gxx-2000}, or just the query locator token. A path is always sent to
+     * the same host as the first page, never to a host named in the argument.
+     *
+     * @param urlOrToken the {@code nextRecordsUrl} path or the query locator token
+     * @return the next page of results
+     * @throws IllegalArgumentException if the value is null, blank, {@code .} or {@code ..}
      */
     QueryResult nextPage(String urlOrToken);
 
     /**
-     * Execute SOQL query and return all results.
+     * Executes the SOQL query and follows {@code nextRecordsUrl} until every page has been read, returning all
+     * records in one result. Despite the name, deleted and archived records are not included: it uses the
+     * {@code query} resource, not {@code queryAll}. The whole result set is held in memory, so large result sets
+     * are costly.
      *
      * @param query The SOQL query to execute
      * @return QueryResult

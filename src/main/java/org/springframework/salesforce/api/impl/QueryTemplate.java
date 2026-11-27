@@ -24,25 +24,45 @@ import org.springframework.salesforce.api.Salesforce;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Default implementation of QueryOperations.
+ * Default implementation of {@link QueryOperations} for SOQL queries.
  *
  * @author Umut Utkan
  * @author Jared Ottley
  */
 public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> implements QueryOperations {
 
+    /** The shared rest template used for requests. */
     private final RestTemplate restTemplate;
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the {@link Salesforce} instance this operations object belongs to
+     * @param restTemplate the shared rest template used for requests
+     */
     public QueryTemplate(Salesforce api, RestTemplate restTemplate) {
         super(api);
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Runs a SOQL query, excluding deleted and archived records.
+     *
+     * @param query the SOQL query
+     * @return the first page of results
+     */
     @Override
     public QueryResult query(String query) {
         return query(query, false);
     }
 
+    /**
+     * Runs a SOQL query, optionally including deleted and archived records.
+     *
+     * @param query the SOQL query
+     * @param includeDeletedItems {@code true} to use the {@code queryAll} resource
+     * @return the first page of results
+     */
     @Override
     public QueryResult query(String query, boolean includeDeletedItems) {
         String queryType = includeDeletedItems ? "/queryAll" : "/query";
@@ -52,6 +72,16 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
         return restTemplate.getForObject(uri, QueryResult.class);
     }
 
+    /**
+     * Fetches the next page of a query result.
+     * <p>
+     * A value containing {@code /} is treated as a path (the {@code nextRecordsUrl}) on the same host as the
+     * API base URL; anything else is treated as a query locator.
+     *
+     * @param pathOrToken the {@code nextRecordsUrl} or the query locator
+     * @return the next page of results
+     * @throws IllegalArgumentException if the value is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public QueryResult nextPage(String pathOrToken) {
         requireAuthorization();
@@ -72,9 +102,11 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
     }
 
     /**
-     * Pages through the result set and aggregates all sObjects into the single result set.<br>
-     * USUAL WARNINGS ABOUT RESULT SET SIZE APPLY
-     * @see org.springframework.salesforce.api.QueryOperations#queryAll(java.lang.String)
+     * Pages through the result set and aggregates all sObjects into a single result set.
+     * USUAL WARNINGS ABOUT RESULT SET SIZE APPLY.
+     *
+     * @param query the SOQL query
+     * @return a result containing the records from every page
      */
     @Override
     public QueryResult queryAll(String query) {

@@ -25,58 +25,86 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 /**
- * The core limits properties. Any additional limits for connected apps can call
- * be found in the additional properties
+ * The core limits properties: the maximum allowed and the amount remaining. Any
+ * other properties Salesforce sends for the limit (for example, connected app
+ * limits) can be found in the additional properties.
  *
  * @author Jared Ottley
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AbstractLimits implements Serializable {
 
+    /** Serialization version identifier. */
     private static final long serialVersionUID = 6213553807904726408L;
 
+    /** The maximum amount allowed. */
     @JsonProperty("Max")
     private int max;
 
+    /** The amount remaining. */
     @JsonProperty("Remaining")
     private int remaining;
 
+    /** Properties other than {@code Max} and {@code Remaining}, keyed by name. */
     @JsonIgnore
     private final Map<String, Object> additionalProperties = new HashMap<>();
 
     /**
-     * NOOP
+     * Creates an empty instance; {@code max} and {@code remaining} are zero.
      */
     public AbstractLimits() {
 
     }
 
     /**
+     * Creates a limit with the given values.
      *
-     * @param remaining
-     * @param max
+     * @param max the maximum amount allowed
+     * @param remaining the amount remaining
      */
     public AbstractLimits(int max, int remaining) {
         this.max = max;
         this.remaining = remaining;
     }
 
+    /**
+     * Returns the maximum amount allowed.
+     *
+     * @return the maximum amount allowed
+     */
     @JsonProperty("Max")
     public int getMax() {
         return max;
     }
 
+    /**
+     * Returns the amount remaining.
+     *
+     * @return the amount remaining
+     */
     @JsonProperty("Remaining")
     public int getRemaining() {
         return remaining;
     }
 
+    /**
+     * Returns any properties other than {@code Max} and {@code Remaining} that were
+     * received. The returned map is the live internal map, not a copy.
+     *
+     * @return the additional properties, keyed by name
+     */
     @JsonAnyGetter
     public Map<String, Object> getAdditionalProperties() {
         return this.additionalProperties;
     }
 
+    /**
+     * Stores a property other than {@code Max} and {@code Remaining}.
+     *
+     * @param name the property name
+     * @param value the property value
+     */
     @JsonAnySetter
     public void setAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);

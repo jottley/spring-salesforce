@@ -17,13 +17,33 @@ package org.springframework.salesforce.api;
 
 /**
  * Exception thrown when authorization credentials are invalid or expired.
+ * <p>
+ * {@link org.springframework.salesforce.api.impl.SalesforceErrorHandler} throws it for an HTTP 401 response, and
+ * for an HTTP 403 response whose {@code errorCode} is {@code Bad_OAuth_Token} (including the case where
+ * Salesforce sends {@code Bad_OAuth_Token} as a bare string rather than JSON).
+ * {@link org.springframework.salesforce.client.ErrorHandler} throws it for the OAuth2 token errors
+ * {@code invalid_client_id}, {@code invalid_client_credentials}, {@code invalid_scope} and {@code invalid_grant}
+ * (except when the description is {@code IP restricted or invalid login hours}).
+ *
+ * @author Jared Ottley
  */
 public class InvalidAuthorizationException extends ApiException {
 
+    /**
+     * Creates the exception with a detail message.
+     *
+     * @param message the detail message
+     */
     public InvalidAuthorizationException(String message) {
         super(message);
     }
 
+    /**
+     * Creates the exception with a detail message and a cause.
+     *
+     * @param message the detail message
+     * @param cause the underlying cause
+     */
     public InvalidAuthorizationException(String message, Throwable cause) {
         super(message, cause);
     }

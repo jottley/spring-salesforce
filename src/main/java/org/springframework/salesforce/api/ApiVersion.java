@@ -18,17 +18,30 @@ package org.springframework.salesforce.api;
 import java.io.Serializable;
 
 /**
+ * A Salesforce API version, as listed by the instance's {@code /services/data} resource.
+ *
  * @author Umut Utkan
+ * @author Jared Ottley
  */
 public class ApiVersion implements Serializable {
 
+    /** The release label. */
     private final String label;
 
+    /** The version number. */
     private final String version;
 
+    /** The root path of this version, relative to the instance URL. */
     private final String url;
 
 
+    /**
+     * Creates an API version.
+     *
+     * @param version the version number, for example {@code 68.0}
+     * @param label the release label, for example {@code Winter '27}
+     * @param url the root path of this version, relative to the instance URL, for example {@code /services/data/v68.0}
+     */
     public ApiVersion(String version, String label, String url) {
         this.version = version;
         this.label = label;
@@ -36,18 +49,38 @@ public class ApiVersion implements Serializable {
     }
 
 
+    /**
+     * Returns the release label.
+     *
+     * @return the label
+     */
     public String getLabel() {
         return label;
     }
 
+    /**
+     * Returns the version number.
+     *
+     * @return the version number
+     */
     public String getVersion() {
         return version;
     }
 
+    /**
+     * Returns the root path of this version, relative to the instance URL.
+     *
+     * @return the URL
+     */
     public String getUrl() {
         return url;
     }
 
+    /**
+     * Returns a string showing the label, version and URL.
+     *
+     * @return a description of this version
+     */
     @Override
     public String toString() {
         return "ApiVersion{" +

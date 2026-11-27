@@ -16,14 +16,31 @@
 package org.springframework.salesforce.api;
 
 /**
- * Exception thrown when an operation requires authorization but none is present.
+ * Exception thrown when an operations object has no authorization context to work with.
+ * <p>
+ * The operations implementations throw it when they have no {@link org.springframework.salesforce.api.Salesforce}
+ * API instance to work with, before any request is made. It does not check for an access token: a missing or
+ * rejected token is reported as an {@link InvalidAuthorizationException}.
+ *
+ * @author Jared Ottley
  */
 public class MissingAuthorizationException extends ApiException {
 
+    /**
+     * Creates the exception with a detail message.
+     *
+     * @param message the detail message
+     */
     public MissingAuthorizationException(String message) {
         super(message);
     }
 
+    /**
+     * Creates the exception with a detail message and a cause.
+     *
+     * @param message the detail message
+     * @param cause the underlying cause
+     */
     public MissingAuthorizationException(String message, Throwable cause) {
         super(message, cause);
     }

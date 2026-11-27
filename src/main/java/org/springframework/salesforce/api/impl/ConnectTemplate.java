@@ -25,19 +25,39 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * Default implementation of {@link ConnectOperations}, for Experience Cloud (communities) resources.
+ *
+ * @author Jared Ottley
+ */
 public class ConnectTemplate extends AbstractSalesForceOperations<Salesforce> implements ConnectOperations {
 
+    /** The shared rest template used for requests. */
     private final RestTemplate restTemplate;
 
+    /** Path of the communities resource, appended to the versioned base URL. */
     private static final String CONNECT_URI = "/connect/communities/";
 
+    /** Path segment of the Chatter users resource within a community. */
     private static final String CHATTER_USERS = "/chatter/users";
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the {@link Salesforce} instance this operations object belongs to
+     * @param restTemplate the shared rest template used for requests
+     */
     public ConnectTemplate(Salesforce api, RestTemplate restTemplate) {
         super(api);
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Retrieves the communities available to the user.
+     *
+     * @return the communities; an empty list if the response has no body, or {@code null} if the body has no
+     *         {@code communities} entry
+     */
     @Override
     public List<Community> getCommunities() {
 
@@ -52,6 +72,14 @@ public class ConnectTemplate extends AbstractSalesForceOperations<Salesforce> im
         return api.readList(dataNode.get("communities"), Community.class);
     }
 
+    /**
+     * Retrieves the first page of users of a community; later pages are not fetched.
+     *
+     * @param communityId the community id
+     * @return the community users; an empty list if the response has no body, or {@code null} if the body has
+     *         no {@code users} entry
+     * @throws IllegalArgumentException if the community id is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public List<CommunityUser> getCommunityUsers(String communityId) {
 

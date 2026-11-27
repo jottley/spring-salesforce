@@ -20,33 +20,61 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 
 /**
+ * Chatter profile photo URLs (small and large) of a user, as reported by Salesforce.
+ *
  * @author Umut Utkan
+ * @author Jared Ottley
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Photo {
 
+    /** The URL of the small photo. */
     private String smallPhotoUrl;
 
+    /** The URL of the large photo. */
     private String largePhotoUrl;
 
 
+    /**
+     * Creates an empty photo.
+     */
     public Photo() {
         //NOOP
     }
 
 
+    /**
+     * Returns the URL of the small photo.
+     *
+     * @return the small photo URL
+     */
     public String getSmallPhotoUrl() {
         return smallPhotoUrl;
     }
 
+    /**
+     * Sets the URL of the small photo.
+     *
+     * @param smallPhotoUrl the small photo URL
+     */
     public void setSmallPhotoUrl(String smallPhotoUrl) {
         this.smallPhotoUrl = smallPhotoUrl;
     }
 
+    /**
+     * Returns the URL of the large photo.
+     *
+     * @return the large photo URL
+     */
     public String getLargePhotoUrl() {
         return largePhotoUrl;
     }
 
+    /**
+     * Sets the URL of the large photo.
+     *
+     * @param largePhotoUrl the large photo URL
+     */
     public void setLargePhotoUrl(String largePhotoUrl) {
         this.largePhotoUrl = largePhotoUrl;
     }

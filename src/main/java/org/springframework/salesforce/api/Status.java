@@ -19,36 +19,72 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * The {@code body} of a Chatter user status (its text and the segments the text is made of), as returned
+ * by the Chatter user status resource, which Salesforce retired in API version 25.
+ *
  * @author Umut Utkan
+ * @author Jared Ottley
  */
 public class Status {
 
+    /** The status text. */
     private String text;
 
+    /** The segments of the status text. */
     private List<Map<String, String>> segments;
 
 
+    /**
+     * Creates a status.
+     *
+     * @param text the status text
+     */
     public Status(String text) {
         this.text = text;
     }
 
 
+    /**
+     * Returns the status text.
+     *
+     * @return the text
+     */
     public String getText() {
         return text;
     }
 
+    /**
+     * Sets the status text.
+     *
+     * @param text the text
+     */
     public void setText(String text) {
         this.text = text;
     }
 
+    /**
+     * Returns the segments of the status text.
+     *
+     * @return the segments
+     */
     public List<Map<String, String>> getSegments() {
         return segments;
     }
 
+    /**
+     * Sets the segments of the status text.
+     *
+     * @param segments the segments
+     */
     public void setSegments(List<Map<String, String>> segments) {
         this.segments = segments;
     }
 
+    /**
+     * Returns a string showing the text and segments.
+     *
+     * @return a description of this status
+     */
     @Override
     public String toString() {
         return "Status{" +

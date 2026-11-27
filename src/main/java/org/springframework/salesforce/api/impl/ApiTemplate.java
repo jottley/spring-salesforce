@@ -32,27 +32,44 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * Default implementation of ApiOperations.
+ * Default implementation of {@link ApiOperations}. It holds the API version in use and validates it:
+ * a version must be {@code v}, a one to three digit major number, a dot and a single digit (for example
+ * {@code v68.0}), and its major number must not be below
+ * {@link ApiOperations#MINIMUM_API_VERSION}.
  *
  * @author Umut Utkan
  * @author Jared Ottley
  */
 public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implements ApiOperations {
 
+    /** The shared rest template used for requests. */
     private final RestTemplate restTemplate;
+    /** The configured API version, or {@code null} to use the default. */
     private String version;
 
 
     // Anchored so surrounding text is rejected, and capped at three digits so the major version always fits an int
+    /** Matches a version such as {@code v68.0} and captures the major number. */
     private static final Pattern VERSION_PATTERN = Pattern.compile("^v(\\d{1,3})\\.\\d$");
 
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the {@link Salesforce} instance this operations object belongs to
+     * @param restTemplate the shared rest template used for requests
+     */
     public ApiTemplate(Salesforce api, RestTemplate restTemplate) {
         super(api);
         this.restTemplate = restTemplate;
     }
 
 
+    /**
+     * Retrieves the API versions the instance supports.
+     *
+     * @return the available versions
+     */
     @Override
     public List<ApiVersion> getVersions() {
         URI uri = UriComponentsBuilder.fromUriString(api.getBaseUrl()).build().toUri();
@@ -61,6 +78,14 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
         return api.readList(dataNode, ApiVersion.class);
     }
 
+    /**
+     * Retrieves the resources available for an API version.
+     *
+     * @param version the API version, for example {@code v68.0}
+     * @return a map of resource name to URL
+     * @throws InvalidSalesforceApiVersionException if the version is null, blank, malformed or below the minimum
+     * @throws org.springframework.salesforce.api.MissingAuthorizationException if the API instance is {@code null}
+     */
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, String> getServices(String version) {
@@ -69,12 +94,23 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
         return restTemplate.getForObject(api.getBaseUrl() + "/{version}", Map.class, version);
     }
 
+    /**
+     * Retrieves the resources available for the current API version.
+     *
+     * @return a map of resource name to URL
+     */
     @Override
     public Map<String, String> getServices() {
         requireAuthorization();
         return this.getServices(getVersion());
     }
 
+    /**
+     * Sets the API version to use.
+     *
+     * @param version the API version, for example {@code v68.0}
+     * @throws InvalidSalesforceApiVersionException if the version is null, blank, malformed or below the minimum
+     */
     @Override
     public void setVersion(String version)
             throws InvalidSalesforceApiVersionException
@@ -84,6 +120,11 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
     }
 
 
+    /**
+     * Returns the configured API version.
+     *
+     * @return the configured version, or {@link ApiOperations#DEFAULT_API_VERSION} if none is set
+     */
     @Override
     public String getVersion()
     {
@@ -101,6 +142,9 @@ public class ApiTemplate extends AbstractSalesForceOperations<Salesforce> implem
     /**
      * Rejects anything that is not a well-formed version such as {@code v68.0}, and anything older than
      * {@link ApiOperations#MINIMUM_API_VERSION}.
+     *
+     * @param version the version to check
+     * @throws InvalidSalesforceApiVersionException if the version is invalid
      */
     private void validateVersion(String version) throws InvalidSalesforceApiVersionException
     {

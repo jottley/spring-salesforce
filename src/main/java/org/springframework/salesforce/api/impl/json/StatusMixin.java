@@ -26,18 +26,24 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * {@link Status}
+ * Jackson mixin that maps JSON properties onto {@link Status}.
  *
  * @author Umut Utkan
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StatusMixin {
 
+    /**
+     * Binds the constructor arguments of {@code Status} to JSON properties.
+     *
+     * @param text the JSON {@code text} property
+     */
     @JsonCreator
     StatusMixin(
             @JsonProperty("text") String text) {
     }
 
+    /** Binds the JSON property {@code messageSegments} to {@code Status.segments}. */
     @JsonProperty("messageSegments")
     List<Map<String, String>> segments;
 

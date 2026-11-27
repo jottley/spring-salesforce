@@ -17,13 +17,28 @@ package org.springframework.salesforce.api;
 
 /**
  * Exception thrown when the API server returns an internal server error.
+ * <p>
+ * {@link org.springframework.salesforce.api.impl.SalesforceErrorHandler} throws it for an HTTP 500 response.
+ *
+ * @author Jared Ottley
  */
 public class InternalServerErrorException extends ApiException {
 
+    /**
+     * Creates the exception with a detail message.
+     *
+     * @param message the detail message from Salesforce
+     */
     public InternalServerErrorException(String message) {
         super(message);
     }
 
+    /**
+     * Creates the exception with a detail message and a cause.
+     *
+     * @param message the detail message from Salesforce
+     * @param cause the underlying cause
+     */
     public InternalServerErrorException(String message, Throwable cause) {
         super(message, cause);
     }

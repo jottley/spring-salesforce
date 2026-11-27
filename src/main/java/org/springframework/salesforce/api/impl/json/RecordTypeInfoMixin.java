@@ -24,13 +24,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 /**
- * {@link RecordTypeInfo}
+ * Jackson mixin that maps JSON properties onto {@link RecordTypeInfo}.
  *
  * @author Umut Utkan
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RecordTypeInfoMixin {
 
+    /**
+     * Binds the constructor arguments of {@code RecordTypeInfo} to JSON properties.
+     *
+     * @param name the JSON {@code name} property
+     * @param available the JSON {@code available} property
+     * @param recordTypeId the JSON {@code recordTypeId} property
+     * @param defaultRecordTypeMapping the JSON {@code defaultRecordTypeMapping} property
+     */
     @JsonCreator
     RecordTypeInfoMixin(
             @JsonProperty("name") String name,

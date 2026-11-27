@@ -27,22 +27,33 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * Default implementation of SearchOperations.
+ * Default implementation of {@link SearchOperations} for SOSL searches.
  *
  * @author Umut Utkan
  * @author Jared Ottley
  */
 public class SearchTemplate extends AbstractSalesForceOperations<Salesforce> implements SearchOperations {
 
+    /** The shared rest template used for requests. */
     private final RestTemplate restTemplate;
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the {@link Salesforce} instance this operations object belongs to
+     * @param restTemplate the shared rest template used for requests
+     */
     public SearchTemplate(Salesforce api, RestTemplate restTemplate) {
         super(api);
         this.restTemplate = restTemplate;
     }
 
     /**
-     * @see org.springframework.salesforce.api.SearchOperations#search(java.lang.String)
+     * Runs a SOSL search. Both the bare-array response of API versions 31 to 36 and the
+     * {@code searchRecords} object of version 37 and later are accepted.
+     *
+     * @param soslQuery the SOSL query
+     * @return the matching items, or an empty list if there are none
      */
     @Override
     public List<ResultItem> search(String soslQuery) {

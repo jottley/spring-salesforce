@@ -17,13 +17,30 @@ package org.springframework.salesforce.api;
 
 /**
  * Exception thrown when the API operation requires permissions that the current user does not have.
+ * <p>
+ * {@link org.springframework.salesforce.api.impl.SalesforceErrorHandler} throws it for an HTTP 403 response
+ * unless the Salesforce {@code errorCode} is {@code Bad_OAuth_Token} (see {@link InvalidAuthorizationException})
+ * or {@code REQUEST_LIMIT_EXCEEDED} (see {@link RateLimitExceededException}).
+ *
+ * @author Jared Ottley
  */
 public class InsufficientPermissionException extends ApiException {
 
+    /**
+     * Creates the exception with a detail message.
+     *
+     * @param message the detail message from Salesforce
+     */
     public InsufficientPermissionException(String message) {
         super(message);
     }
 
+    /**
+     * Creates the exception with a detail message and a cause.
+     *
+     * @param message the detail message from Salesforce
+     * @param cause the underlying cause
+     */
     public InsufficientPermissionException(String message, Throwable cause) {
         super(message, cause);
     }

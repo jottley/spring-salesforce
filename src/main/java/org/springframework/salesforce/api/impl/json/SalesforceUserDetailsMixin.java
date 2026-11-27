@@ -23,12 +23,25 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * {@link SalesforceUserDetails}
+ * Jackson mixin that maps JSON properties onto {@link SalesforceUserDetails}, using the OpenID Connect userinfo property names.
+ *
  * @author Alexandra Leahu
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SalesforceUserDetailsMixin {
 
+    /**
+     * Binds the constructor arguments of {@code SalesforceUserDetails} to JSON properties.
+     *
+     * @param id the JSON {@code user_id} property
+     * @param firstName the JSON {@code given_name} property
+     * @param lastName the JSON {@code family_name} property
+     * @param email the JSON {@code email} property
+     * @param name the JSON {@code name} property
+     * @param organizationId the JSON {@code organization_id} property
+     * @param nickname the JSON {@code nickname} property
+     * @param preferredUsername the JSON {@code preferred_username} property
+     */
     @JsonCreator
     SalesforceUserDetailsMixin(
             @JsonProperty("user_id") String id,

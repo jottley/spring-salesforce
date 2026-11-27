@@ -43,20 +43,34 @@ import org.springframework.web.util.UriUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * Default implementation of SObjectOperations.
+ * Default implementation of {@link SObjectOperations}. Names, ids and field names are checked
+ * before use so that they cannot alter the request path.
  *
  * @author Umut Utkan
- * @author Jared ottley
+ * @author Jared Ottley
  */
 public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> implements SObjectOperations {
 
+    /** The shared rest template used for requests. */
     private final RestTemplate restTemplate;
 
+    /**
+     * Creates the operations instance.
+     *
+     * @param api the {@link Salesforce} instance this operations object belongs to
+     * @param restTemplate the shared rest template used for requests
+     */
     public SObjectsTemplate(Salesforce api, RestTemplate restTemplate) {
         super(api);
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Lists the sObjects available in the org.
+     *
+     * @return one map of properties per sObject; an empty list if the response had no body, or {@code null}
+     *         if the body has no {@code sobjects} entry
+     */
     @Override
     public List<Map> getSObjects() {
         requireAuthorization();
@@ -69,6 +83,13 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         return Collections.emptyList();
     }
 
+    /**
+     * Retrieves the basic information of an sObject type.
+     *
+     * @param name the sObject name
+     * @return the summary, or {@code null} if nothing was returned
+     * @throws IllegalArgumentException if the name is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public SObjectSummary getSObjectSummary(String name) {
         requireAuthorization();
@@ -80,12 +101,28 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         return null;
     }
 
+    /**
+     * Retrieves the full metadata of an sObject type.
+     *
+     * @param name the sObject name
+     * @return the sObject description
+     * @throws IllegalArgumentException if the name is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public SObjectDetail describeSObject(String name) {
         requireAuthorization();
         return restTemplate.getForObject(api.getBaseUrl() + "/{version}/sobjects/{name}/describe", SObjectDetail.class, getVersion(), requirePathSegment("sObject name", name));
     }
 
+    /**
+     * Retrieves a record.
+     *
+     * @param name the sObject name
+     * @param id the record id
+     * @param fields the fields to return; all fields if none are given
+     * @return the record as a map of field values
+     * @throws IllegalArgumentException if the name or id is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public Map getRow(String name, String id, String... fields) {
         requireAuthorization();
@@ -102,6 +139,15 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         return restTemplate.getForObject(URI.create(url.toString()), Map.class);
     }
 
+    /**
+     * Retrieves the content of a blob field into memory.
+     *
+     * @param name the sObject name
+     * @param id the record id
+     * @param field the blob field name
+     * @return a stream over the content; empty if there is none
+     * @throws IllegalArgumentException if the name, id or field is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public InputStream getBlob(String name, String id, String field) {
         requireAuthorization();
@@ -116,6 +162,16 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         return new ByteArrayInputStream(body != null ? body : new byte[0]);
     }
 
+    /**
+     * Streams the content of a blob field to an output stream without buffering it in memory.
+     *
+     * @param name the sObject name
+     * @param id the record id
+     * @param field the blob field name
+     * @param out the stream to write to; not closed by this method
+     * @return the number of bytes written
+     * @throws IllegalArgumentException if the name, id or field is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public long downloadBlob(String name, String id, String field, OutputStream out) {
         requireAuthorization();
@@ -128,6 +184,14 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         return written == null ? 0L : written;
     }
 
+    /**
+     * Creates a record.
+     *
+     * @param name the sObject name
+     * @param fields the field values
+     * @return the create result (id, success flag and errors)
+     * @throws IllegalArgumentException if the name is null, blank, {@code .} or {@code ..}
+     */
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Map<String, Object> create(String name, Map<String, Object> fields) {
@@ -138,6 +202,19 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         return restTemplate.postForObject(api.getBaseUrl() + "/{version}/sobjects/{name}", entity, Map.class, getVersion(), requirePathSegment("sObject name", name));
     }
 
+    /**
+     * Updates a record.
+     * <p>
+     * The request is sent as a POST with {@code _HttpMethod=PATCH}. If Salesforce returns an empty body (the
+     * normal success case), a result with the record id, {@code success} true and no errors is returned in the
+     * same shape as a create result; any body that is returned is passed through unchanged.
+     *
+     * @param sObjectName the sObject name
+     * @param sObjectId the record id
+     * @param fields the field values to change
+     * @return the update result
+     * @throws IllegalArgumentException if the name or id is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public Map<String, Object> update(String sObjectName, String sObjectId, Map<String, Object> fields) {
         requireAuthorization();
@@ -158,6 +235,13 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
     }
 
 
+    /**
+     * Deletes a record.
+     *
+     * @param sObjectName the sObject name
+     * @param sObjectId the record id
+     * @throws IllegalArgumentException if the name or id is null, blank, {@code .} or {@code ..}
+     */
     @Override
     public void delete(String sObjectName, String sObjectId)
     {
