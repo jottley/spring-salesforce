@@ -54,7 +54,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * The response body is only used for detail, and may be missing or not JSON.
  * <p>
  * Because this class does not override {@code hasError}, Spring only passes 4xx and 5xx responses to it.
- * A 300 is mapped to a {@link SalesforceRequestException} only if {@code handleError} is called directly.
+ * A 300 (for example Salesforce's response when an external id matches several records, whose body lists the
+ * candidate record URLs) is not an error: it is returned to the caller as a normal response.
  *
  * @author Umut Utkan
  * @author Jared Ottley
@@ -67,7 +68,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
     public SalesforceErrorHandler() {
     }
     /** Logger for diagnostics about unreadable error bodies. */
-    Logger logger = LoggerFactory.getLogger(SalesforceErrorHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(SalesforceErrorHandler.class);
 
     /** Key of the Salesforce error code within an error body. */
     private static final String ERROR_CODE = "errorCode";
@@ -94,8 +95,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
      * @throws ResourceNotFoundException for 404
      * @throws RateLimitExceededException for 429, 503 and a 403 with {@code REQUEST_LIMIT_EXCEEDED}
      * @throws InternalServerErrorException for 500
-     * @throws SalesforceRequestException for 400 (and for 300 when called directly, as Spring does not route
-     *         3xx responses here)
+     * @throws SalesforceRequestException for 400
      * @throws InvalidAuthorizationException for 401 and a 403 with {@code Bad_OAuth_Token}
      * @throws InsufficientPermissionException for any other 403
      * @throws UncategorizedApiException for any other status, or if the body cannot be read
@@ -163,7 +163,7 @@ public class SalesforceErrorHandler extends DefaultResponseErrorHandler {
             case INTERNAL_SERVER_ERROR -> throw new InternalServerErrorException(
                     extractErrorMessage(errorDetails)
                 );
-            case BAD_REQUEST, MULTIPLE_CHOICES -> throw new SalesforceRequestException(
+            case BAD_REQUEST -> throw new SalesforceRequestException(
                     errorDetails
                 );
             case UNAUTHORIZED -> throw new InvalidAuthorizationException(

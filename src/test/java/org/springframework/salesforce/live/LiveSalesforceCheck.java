@@ -305,10 +305,47 @@ public class LiveSalesforceCheck {
 			QueryResult result = api.queryOperations().query("SELECT Id FROM Account WHERE Name = 'live+check&text'");
 			return result.getRecords().size() + " rows (the point is that Salesforce accepted the query)";
 		});
+		core("compound field (BillingAddress) in a query result", () -> {
+			// A compound field arrives as a nested object with no "attributes" entry
+			QueryResult result = api.queryOperations().query("SELECT Id, BillingAddress FROM Account WHERE BillingCity != null LIMIT 1");
+			if (result.getRecords().isEmpty()) {
+				throw new Skip("no Account has a billing address; enable writes to create one");
+			}
+			assertNotNull("BillingAddress missing from the record", result.getRecords().get(0).getAttributes().get("BillingAddress"));
+			return "the record with a compound field was read";
+		});
+		core("query with a parent, a child subquery and a compound field", () -> {
+			QueryResult result = api.queryOperations().query(
+					"SELECT Id, Name, Owner.Name, BillingAddress, (SELECT Id, LastName FROM Contacts) FROM Account LIMIT 25");
+			if (result.getRecords().isEmpty()) {
+				throw new Skip("the org has no Account rows");
+			}
+			int parents = 0, children = 0, compounds = 0;
+			for (var record : result.getRecords()) {
+				Object owner = record.getAttributes().get("Owner");
+				if (owner != null) {
+					assertTrue("Owner should be a ResultItem but was " + owner.getClass().getSimpleName(), owner instanceof org.springframework.salesforce.api.ResultItem);
+					parents++;
+				}
+				Object contacts = record.getAttributes().get("Contacts");
+				if (contacts != null) {
+					assertTrue("Contacts should be a QueryResult but was " + contacts.getClass().getSimpleName(), contacts instanceof QueryResult);
+					children++;
+				}
+				Object address = record.getAttributes().get("BillingAddress");
+				if (address != null) {
+					assertTrue("BillingAddress should be a Map but was " + address.getClass().getSimpleName(), address instanceof Map);
+					compounds++;
+				}
+			}
+			return result.getRecords().size() + " rows; " + parents + " with a parent record, " + children
+					+ " with a child result, " + compounds + " with a compound field";
+		});
 		core("queryAll pages through a large result", () -> {
 			String object = env("SF_PAGING_OBJECT");
 			List<String> candidates = object != null ? List.of(object) : List.of("ObjectPermissions", "Account", "Contact", "Lead", "Opportunity", "Case");
 			List<String> notes = new ArrayList<>();
+			String nextShape = "";
 			for (String candidate : candidates) {
 				int count;
 				try {
@@ -321,11 +358,19 @@ public class LiveSalesforceCheck {
 					continue;
 				}
 				if (count > 2000 && count <= 50000) {
+					// Report the shape of the next-page URL the queryAll resource hands out (the locator itself is masked)
+					JsonNode firstPage = json.readTree(raw.getForObject(
+							instanceUrl + "/services/data/" + api.apiOperations().getVersion() + "/queryAll?q={q}", String.class,
+							"SELECT Id FROM " + candidate));
+					String next = firstPage.path("nextRecordsUrl").asText("");
+					assertTrue("the queryAll resource returned no nextRecordsUrl for " + count + " rows", !next.isEmpty());
+					nextShape = next.replaceAll("[^/]+$", "<locator>");
 					int collected = api.queryOperations().queryAll("SELECT Id FROM " + candidate).getRecords().size();
 					// Rows can be added or removed between the COUNT and the fetch in a shared org, so allow a little drift
 					assertTrue("queryAll collected " + collected + " rows but COUNT() said " + count,
 							collected > 2000 && Math.abs(collected - count) <= Math.max(5, count / 100));
-					return candidate + ": " + collected + " rows collected across pages (COUNT() said " + count + ")";
+					return candidate + ": " + collected + " rows collected across pages (COUNT() said " + count
+							+ "); queryAll first page's nextRecordsUrl has the shape " + nextShape;
 				}
 				notes.add(candidate + " has " + count + " rows");
 			}
@@ -473,6 +518,26 @@ public class LiveSalesforceCheck {
 			assertNotNull(api.userOperations(gatewayUrl).getSalesforceUserDetails());
 			return "user details returned";
 		});
+		optional("user info: photo and username are bound from the userinfo response", () -> {
+			JsonNode info = json.readTree(raw.getForObject(gatewayUrl + "/services/oauth2/userinfo", String.class));
+			JsonNode photos = info.get("photos");
+			var details = api.userOperations(gatewayUrl).getSalesforceUserDetails();
+			// Only key names and whether a value is present are reported, never the values
+			if (photos != null && photos.hasNonNull("picture")) {
+				assertNotNull("photos.picture was sent but getPhoto() is null", details.getPhoto());
+				assertEquals(photos.get("picture").asText(), details.getPhoto().getLargePhotoUrl());
+			}
+			if (photos != null && photos.hasNonNull("thumbnail")) {
+				assertNotNull("photos.thumbnail was sent but getPhoto() is null", details.getPhoto());
+				assertEquals(photos.get("thumbnail").asText(), details.getPhoto().getSmallPhotoUrl());
+			}
+			if (info.hasNonNull("preferred_username")) {
+				assertEquals(info.get("preferred_username").asText(), details.getUsername());
+			}
+			return "raw photos keys=" + (photos == null ? "absent" : keysOf(photos))
+					+ "; getPhoto()=" + (details.getPhoto() == null ? "null" : "set")
+					+ ", getUsername()=" + (details.getUsername() == null ? "null" : "set");
+		});
 		optional("chatter profile", () -> {
 			SalesforceProfile profile = api.chatterOperations().getUserProfile();
 			assertNotNull(profile);
@@ -553,6 +618,75 @@ public class LiveSalesforceCheck {
 			cleanup.removeIf(e -> e.getKey().equals("Account " + accountId[0]));
 			assertThrows(ResourceNotFoundException.class, () -> api.sObjectsOperations().getRow("Account", accountId[0]));
 			return "deleted; a later read reports not found";
+		});
+
+		String[] compoundId = new String[1];
+		core("write: compound field (BillingAddress) round trip", () -> {
+			Map<String, Object> fields = new LinkedHashMap<>();
+			fields.put("Name", "spring-salesforce live check compound " + stamp);
+			fields.put("BillingStreet", "1 Main St");
+			fields.put("BillingCity", "Springfield");
+			Map<String, Object> created = api.sObjectsOperations().create("Account", fields);
+			compoundId[0] = String.valueOf(created.get("id"));
+			cleanup.push(Map.entry("Account " + compoundId[0], () -> api.sObjectsOperations().delete("Account", compoundId[0])));
+			QueryResult result = api.queryOperations().query("SELECT Id, BillingAddress FROM Account WHERE Id = '" + compoundId[0] + "'");
+			assertEquals(1, result.getRecords().size());
+			assertNotNull("BillingAddress missing from the record", result.getRecords().get(0).getAttributes().get("BillingAddress"));
+			return "the compound field was read back";
+		});
+		core("write: queryAll(String) includes deleted records, query(String) does not", () -> {
+			requireValue(compoundId[0], "the Account was not created");
+			api.sObjectsOperations().delete("Account", compoundId[0]);
+			cleanup.removeIf(e -> e.getKey().equals("Account " + compoundId[0]));
+			String soql = "SELECT Id FROM Account WHERE Id = '" + compoundId[0] + "'";
+			int viaQuery = api.queryOperations().query(soql).getRecords().size();
+			int viaQueryAllMethod = api.queryOperations().queryAll(soql).getRecords().size();
+			int viaIncludeDeleted = api.queryOperations().query(soql, true).getRecords().size();
+			assertEquals("query(soql) should not see the deleted record", 0, viaQuery);
+			assertEquals("queryAll(soql) should see the deleted record", 1, viaQueryAllMethod);
+			assertEquals("queryAll(soql, false) should not see the deleted record", 0,
+					api.queryOperations().queryAll(soql, false).getRecords().size());
+			assertEquals("query(soql, true) should see the deleted record", 1, viaIncludeDeleted);
+			return "deleted record: query()=" + viaQuery + ", queryAll(String)=" + viaQueryAllMethod
+					+ ", query(String, true)=" + viaIncludeDeleted;
+		});
+
+		core("write: the queryAll resource keeps returning deleted records on later pages (raw)", () -> {
+			// 250 deleted rows with a batch size of 200 force a second page; if the next-page cursor lost the
+			// "include deleted" mode, the second page would be empty
+			String prefix = "spring-salesforce live paging " + stamp;
+			String data = instanceUrl + "/services/data/" + api.apiOperations().getVersion();
+			List<String> ids = new ArrayList<>();
+			for (int from = 0; from < 250; from += 200) {
+				List<Map<String, Object>> records = new ArrayList<>();
+				for (int i = from; i < Math.min(from + 200, 250); i++) {
+					records.add(Map.of("attributes", Map.of("type", "Account"), "Name", prefix + " " + i));
+				}
+				org.springframework.http.HttpHeaders jsonHeaders = new org.springframework.http.HttpHeaders();
+				jsonHeaders.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+				JsonNode created = json.readTree(raw.postForObject(data + "/composite/sobjects",
+						new org.springframework.http.HttpEntity<>(json.writeValueAsString(Map.of("allOrNone", true, "records", records)), jsonHeaders),
+						String.class));
+				created.forEach(r -> ids.add(r.path("id").asText()));
+			}
+			cleanup.push(Map.entry("paging Accounts", () -> deleteAccounts(data, ids)));
+			assertEquals("created Accounts", 250, ids.size());
+			deleteAccounts(data, ids);
+
+			org.springframework.http.HttpHeaders batch = new org.springframework.http.HttpHeaders();
+			batch.set("Sforce-Query-Options", "batchSize=200");
+			String soql = "SELECT Id, IsDeleted FROM Account WHERE Name LIKE '" + prefix + "%'";
+			JsonNode first = json.readTree(raw.exchange(data + "/queryAll?q={q}", HttpMethod.GET,
+					new org.springframework.http.HttpEntity<>(batch), String.class, soql).getBody());
+			assertEquals("total deleted rows found by queryAll", 250, first.path("totalSize").asInt());
+			assertEquals("first page size", 200, first.path("records").size());
+			String next = first.path("nextRecordsUrl").asText("");
+			assertTrue("no nextRecordsUrl for a result of 250 rows with batch size 200", !next.isEmpty());
+			JsonNode second = json.readTree(raw.getForObject(instanceUrl + next, String.class));
+			assertEquals("rows on the second page", 50, second.path("records").size());
+			assertTrue("second page rows should be deleted", second.path("records").get(0).path("IsDeleted").asBoolean());
+			return "the second page held " + second.path("records").size() + " deleted rows; nextRecordsUrl shape "
+					+ next.replaceAll("[^/]+$", "<locator>");
 		});
 
 		byte[] content = new byte[64 * 1024];
@@ -649,6 +783,14 @@ public class LiveSalesforceCheck {
 	}
 
 	/** A check that must pass. Any exception fails it. */
+	/** Deletes Accounts through the sObject Collections resource, 200 per request, ignoring ones already gone. */
+	private void deleteAccounts(String dataUrl, List<String> ids) {
+		for (int from = 0; from < ids.size(); from += 200) {
+			String joined = String.join(",", ids.subList(from, Math.min(from + 200, ids.size())));
+			raw.exchange(dataUrl + "/composite/sobjects?ids=" + joined, HttpMethod.DELETE, null, String.class);
+		}
+	}
+
 	private void core(String name, Check check) {
 		execute(name, check, false);
 	}
@@ -736,7 +878,14 @@ public class LiveSalesforceCheck {
 
 	private String describe(Throwable t) {
 		String message = String.valueOf(t.getMessage()).lines().findFirst().orElse("");
-		return redact(t.getClass().getSimpleName() + ": " + message);
+		Throwable root = t;
+		while (root.getCause() != null && root.getCause() != root) {
+			root = root.getCause();
+		}
+		// Wrapper exceptions (for example a RestClientException around a deserializer failure) hide the real
+		// cause, so name its class; the message is left out because it can contain response data.
+		String cause = root == t ? "" : " (root cause: " + root.getClass().getSimpleName() + ")";
+		return redact(t.getClass().getSimpleName() + ": " + message + cause);
 	}
 
 	/** Removes anything that must not appear in a report that might be shared. */

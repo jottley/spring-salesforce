@@ -33,7 +33,7 @@ public class ResultItem implements Serializable {
     /** The URL of the record. */
     private String url;
 
-    /** The record's field values; parent relationships are {@link ResultItem}s and child relationships are {@link QueryResult}s. */
+    /** The record's field values; parent relationships are {@link ResultItem}s, child relationships are {@link QueryResult}s and compound fields such as {@code BillingAddress} are plain maps. */
     private Map attributes;
 
 

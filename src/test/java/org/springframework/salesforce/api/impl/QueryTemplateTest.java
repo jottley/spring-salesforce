@@ -19,6 +19,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import static org.springframework.http.HttpMethod.GET;
 import org.springframework.http.HttpStatus;
@@ -138,6 +139,24 @@ public class QueryTemplateTest extends AbstractSalesforceTest {
         assertEquals("Contact", genePointContacts.getRecords().get(0).getType());
         assertEquals("/services/data/v68.0/sobjects/Contact/003A000000lGE0yIAG", genePointContacts.getRecords().get(0).getUrl());
         assertEquals("Frank", genePointContacts.getRecords().get(0).getAttributes().get("LastName"));
+    }
+
+    @Test
+    public void compoundFieldWithoutAttributesIsKeptAsAMap() {
+        // A compound field such as BillingAddress is a nested object that has no "attributes" entry
+        mockServer.expect(requestTo("https://na7.salesforce.com/services/data/" + salesforce.apiOperations().getVersion() + "/query?q=SELECT%20Id,%20BillingAddress%20FROM%20Account"))
+                .andExpect(method(GET))
+                .andRespond(withStatus(HttpStatus.OK).body(loadResource("query-compound.json")).headers(responseHeaders));
+
+        QueryResult result = salesforce.queryOperations().query("SELECT Id, BillingAddress FROM Account");
+
+        assertEquals(2, result.getRecords().size());
+        Object address = result.getRecords().get(0).getAttributes().get("BillingAddress");
+        assertTrue("a compound field is a plain map, not a ResultItem: " + address, address instanceof Map);
+        assertEquals("Springfield", ((Map<?, ?>) address).get("city"));
+        assertEquals("1 Main St", ((Map<?, ?>) address).get("street"));
+        assertEquals("Account", result.getRecords().get(0).getType());
+        assertNull(result.getRecords().get(1).getAttributes().get("BillingAddress"));
     }
 
     @Test

@@ -84,6 +84,36 @@ public class SalesforceOAuth2ClientTest {
                 client.buildAuthorizeUrl("https://app/cb", "api", "xyz"));
     }
 
+    private static final String AUTHORIZE = "https://mydomain.my.salesforce.com/services/oauth2/authorize?response_type=code&client_id=id";
+
+    @Test
+    public void buildAuthorizeUrlEncodesCharactersThatWouldBreakTheUrl() {
+        assertEquals(AUTHORIZE + "&scope=api%20refresh_token", client.buildAuthorizeUrl(null, "api refresh_token", null));
+        assertEquals(AUTHORIZE + "&state=a%26b%23c%22d", client.buildAuthorizeUrl(null, null, "a&b#c\"d"));
+        assertEquals(AUTHORIZE + "&state=caf%C3%A9", client.buildAuthorizeUrl(null, null, "caf\u00e9"));
+    }
+
+    @Test
+    public void buildAuthorizeUrlLeavesAlreadyEncodedValuesAlone() {
+        // Callers that followed the old Javadoc and encoded their own values must not be encoded twice
+        assertEquals(AUTHORIZE + "&scope=api%20refresh_token", client.buildAuthorizeUrl(null, "api%20refresh_token", null));
+        assertEquals(AUTHORIZE + "&scope=api+refresh_token", client.buildAuthorizeUrl(null, "api+refresh_token", null));
+        assertEquals(AUTHORIZE + "&redirect_uri=https%3A%2F%2Fapp%2Fcb",
+                client.buildAuthorizeUrl("https%3A%2F%2Fapp%2Fcb", null, null));
+    }
+
+    @Test
+    public void buildAuthorizeUrlEncodesAPercentSignThatIsNotAnEscape() {
+        assertEquals(AUTHORIZE + "&state=100%25", client.buildAuthorizeUrl(null, null, "100%"));
+        assertEquals(AUTHORIZE + "&state=%25zz", client.buildAuthorizeUrl(null, null, "%zz"));
+    }
+
+    @Test
+    public void buildAuthorizeUrlKeepsPlainUrlsReadable() {
+        assertEquals(AUTHORIZE + "&redirect_uri=https://app/cb?x=1",
+                client.buildAuthorizeUrl("https://app/cb?x=1", null, null));
+    }
+
     @Test
     public void exchangeForAccessPostsAuthorizationCode() {
         server.expect(requestTo(TOKEN_URL))

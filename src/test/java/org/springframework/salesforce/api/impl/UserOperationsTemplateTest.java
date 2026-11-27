@@ -16,6 +16,8 @@
 package org.springframework.salesforce.api.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import org.junit.Test;
 import static org.springframework.http.HttpMethod.GET;
 import org.springframework.http.HttpStatus;
@@ -43,5 +45,33 @@ public class UserOperationsTemplateTest extends AbstractSalesforceTest {
         assertEquals("johnny", userDetails.getPreferredUsername());
         assertEquals("John", userDetails.getFirstName());
         assertEquals("Doe", userDetails.getLastName());
+    }
+
+    @Test
+    public void getUserDetailsPopulatesThePhotoAndUsername() {
+        mockServer.expect(requestTo("https://login.salesforce.com/services/oauth2/userinfo"))
+                .andExpect(method(GET))
+                .andRespond(withStatus(HttpStatus.OK).body(loadResource("userDetails.json")).headers(responseHeaders));
+
+        SalesforceUserDetails userDetails = salesforce.userOperations().getSalesforceUserDetails();
+
+        // userinfo calls the large photo "picture" and the small one "thumbnail"
+        assertNotNull(userDetails.getPhoto());
+        assertEquals("https://c.na7.content.force.com/profilephoto/005/F", userDetails.getPhoto().getLargePhotoUrl());
+        assertEquals("https://c.na7.content.force.com/profilephoto/005/T", userDetails.getPhoto().getSmallPhotoUrl());
+        // the inherited getter now returns the preferred username
+        assertEquals("johnny", userDetails.getUsername());
+    }
+
+    @Test
+    public void getUserDetailsWithoutPhotosHasNoPhoto() {
+        mockServer.expect(requestTo("https://login.salesforce.com/services/oauth2/userinfo"))
+                .andExpect(method(GET))
+                .andRespond(withStatus(HttpStatus.OK).body("{\"user_id\":\"1\",\"name\":\"N\"}").headers(responseHeaders));
+
+        SalesforceUserDetails userDetails = salesforce.userOperations().getSalesforceUserDetails();
+
+        assertNull(userDetails.getPhoto());
+        assertNull(userDetails.getUsername());
     }
 }

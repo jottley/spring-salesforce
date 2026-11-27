@@ -31,8 +31,8 @@ public interface SObjectOperations {
     /**
      * Lists the sObjects available in the org.
      *
-     * @return one map of properties per sObject; empty if the response body is empty, and null if the body has
-     *         no {@code sobjects} entry
+     * @return one map of properties per sObject; empty if the response body is empty or has no
+     *         {@code sobjects} entry
      */
     public List<Map> getSObjects();
 

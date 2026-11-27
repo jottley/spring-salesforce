@@ -56,13 +56,26 @@ public interface QueryOperations {
 
     /**
      * Executes the SOQL query and follows {@code nextRecordsUrl} until every page has been read, returning all
-     * records in one result. Despite the name, deleted and archived records are not included: it uses the
-     * {@code query} resource, not {@code queryAll}. The whole result set is held in memory, so large result sets
-     * are costly.
+     * records in one result. Deleted and archived records are included: it uses the {@code queryAll} resource.
+     * To exclude them, use {@link #queryAll(String, boolean)} with {@code false}. The whole result set is held in
+     * memory, so large result sets are costly.
      *
      * @param query The SOQL query to execute
      * @return QueryResult
      */
     QueryResult queryAll(String query);
+
+    /**
+     * Executes the SOQL query and follows {@code nextRecordsUrl} until every page has been read, returning all
+     * records in one result, optionally including deleted and archived records. {@code queryAll(query, true)}
+     * is the same as {@link #queryAll(String)}; {@code queryAll(query, false)} uses the {@code query}
+     * resource and excludes deleted and archived records. The whole result set is held in memory, so large
+     * result sets are costly.
+     *
+     * @param query The SOQL query to execute
+     * @param includeDeletedItems {@code true} to include deleted and archived records
+     * @return QueryResult
+     */
+    QueryResult queryAll(String query, boolean includeDeletedItems);
 
 }

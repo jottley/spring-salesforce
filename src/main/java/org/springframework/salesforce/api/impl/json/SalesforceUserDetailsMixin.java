@@ -16,6 +16,8 @@
 package org.springframework.salesforce.api.impl.json;
 
 
+import java.util.Map;
+
 import org.springframework.salesforce.api.SalesforceUserDetails;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Alexandra Leahu
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SalesforceUserDetailsMixin {
+public abstract class SalesforceUserDetailsMixin {
 
     /**
      * Binds the constructor arguments of {@code SalesforceUserDetails} to JSON properties.
@@ -53,4 +55,13 @@ public class SalesforceUserDetailsMixin {
             @JsonProperty("nickname") String nickname,
             @JsonProperty("preferred_username") String preferredUsername) {
     }
+
+    /**
+     * Binds the JSON {@code photos} object to {@code SalesforceUserDetails.setPhotos}, which maps
+     * {@code picture} and {@code thumbnail} onto the large and small photo URLs.
+     *
+     * @param photos the JSON {@code photos} object
+     */
+    @JsonProperty("photos")
+    abstract void setPhotos(Map<String, String> photos);
 }

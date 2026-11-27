@@ -17,6 +17,7 @@ package org.springframework.salesforce.api.client;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -24,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import static org.springframework.http.HttpMethod.POST;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.salesforce.api.InvalidAuthorizationException;
 import org.springframework.salesforce.api.Salesforce;
 import org.springframework.salesforce.api.impl.SalesforceTemplate;
 import org.springframework.salesforce.client.BaseSalesforceFactory;
@@ -31,6 +33,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withNoContent;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import org.springframework.web.client.RestTemplate;
 
@@ -107,6 +110,44 @@ public class BaseSalesforceFactoryTest {
         assertEquals("https://login.salesforce.com/services/oauth2/token", factory.getAuthorizeUrl());
         factory.setAuthorizeUrl(null);
         assertEquals("https://login.salesforce.com/services/oauth2/token", factory.getAuthorizeUrl());
+    }
+
+    @Test
+    public void nullAuthorizeUrlFallsBackToTheProductionTokenEndpointForLogin() {
+        RestTemplate restTemplate = new RestTemplate();
+        MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServer.expect(requestTo("https://login.salesforce.com/services/oauth2/token"))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body("{\"access_token\":\"t\"}"));
+        BaseSalesforceFactory factory = new BaseSalesforceFactory("id", "secret", restTemplate);
+        factory.setAuthorizeUrl(null);
+
+        assertNotNull(factory.create("user", "pw", null));
+        mockServer.verify();
+    }
+
+    private InvalidAuthorizationException loginFailure(org.springframework.test.web.client.ResponseCreator response) {
+        RestTemplate restTemplate = new RestTemplate();
+        MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServer.expect(requestTo("https://login.salesforce.com/services/oauth2/token")).andRespond(response);
+        BaseSalesforceFactory factory = new BaseSalesforceFactory("id", "secret", restTemplate);
+        return assertThrows(InvalidAuthorizationException.class, () -> factory.create("user", "pw", null));
+    }
+
+    @Test
+    public void emptyTokenResponseIsAnInvalidAuthorization() {
+        InvalidAuthorizationException e = loginFailure(withNoContent());
+        assertEquals("The token response contained no access token.", e.getMessage());
+    }
+
+    @Test
+    public void tokenResponseWithoutAnAccessTokenIsAnInvalidAuthorization() {
+        loginFailure(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body("{}"));
+        loginFailure(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body("{\"instance_url\":\"https://na9.salesforce.com\"}"));
+    }
+
+    @Test
+    public void blankAccessTokenIsAnInvalidAuthorization() {
+        loginFailure(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body("{\"access_token\":\"  \"}"));
     }
 
     protected Resource loadResource(String name) {

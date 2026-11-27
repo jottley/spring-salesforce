@@ -18,9 +18,7 @@ package org.springframework.salesforce.api.impl.json;
 
 import org.springframework.salesforce.api.Photo;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 /**
@@ -32,17 +30,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class PhotoMixin {
 
     /**
-     * Mirrors the property names of {@code Photo}. {@code Photo} has no matching two-argument constructor,
-     * so Jackson ignores this creator; {@code smallPhotoUrl} and {@code largePhotoUrl} are bound through
-     * the setters {@code setSmallPhotoUrl} and {@code setLargePhotoUrl}.
-     *
-     * @param smallPhotoUrl the small photo URL (the creator argument has no explicit JSON name and is never used)
-     * @param largePhotoUrl the large photo URL (the creator argument has no explicit JSON name and is never used)
+     * Creates the mixin. It declares no creator: {@code smallPhotoUrl} and {@code largePhotoUrl} are bound
+     * through the setters {@code setSmallPhotoUrl} and {@code setLargePhotoUrl}.
      */
-    @JsonCreator
-    PhotoMixin(
-            @JsonProperty String smallPhotoUrl,
-            @JsonProperty String largePhotoUrl) {
+    PhotoMixin() {
+        //NOOP
     }
 
 }

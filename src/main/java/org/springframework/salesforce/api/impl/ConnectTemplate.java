@@ -55,8 +55,7 @@ public class ConnectTemplate extends AbstractSalesForceOperations<Salesforce> im
     /**
      * Retrieves the communities available to the user.
      *
-     * @return the communities; an empty list if the response has no body, or {@code null} if the body has no
-     *         {@code communities} entry
+     * @return the communities; an empty list if the response has no body or no {@code communities} entry
      */
     @Override
     public List<Community> getCommunities() {
@@ -69,15 +68,14 @@ public class ConnectTemplate extends AbstractSalesForceOperations<Salesforce> im
             return java.util.Collections.emptyList();
         }
 
-        return api.readList(dataNode.get("communities"), Community.class);
+        return emptyIfNull(api.readList(dataNode.get("communities"), Community.class));
     }
 
     /**
      * Retrieves the first page of users of a community; later pages are not fetched.
      *
      * @param communityId the community id
-     * @return the community users; an empty list if the response has no body, or {@code null} if the body has
-     *         no {@code users} entry
+     * @return the community users; an empty list if the response has no body or no {@code users} entry
      * @throws IllegalArgumentException if the community id is null, blank, {@code .} or {@code ..}
      */
     @Override
@@ -92,7 +90,7 @@ public class ConnectTemplate extends AbstractSalesForceOperations<Salesforce> im
             return java.util.Collections.emptyList();
         }
 
-        return api.readList(dataNode.get("users"), CommunityUser.class);
+        return emptyIfNull(api.readList(dataNode.get("users"), CommunityUser.class));
     }
 
 }

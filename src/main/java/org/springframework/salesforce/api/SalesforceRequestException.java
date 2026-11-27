@@ -23,9 +23,7 @@ import java.util.Objects;
  * Encapsulates the error response sent by Salesforce.
  * <p>
  * {@link org.springframework.salesforce.api.impl.SalesforceErrorHandler} throws it for an HTTP 400
- * response, carrying the {@code message}, {@code errorCode} and {@code fields} from the error body. The handler
- * also maps HTTP 300 to this exception, but only if it is called directly: Spring's default error check only
- * routes 4xx and 5xx responses to the handler.
+ * response, carrying the {@code message}, {@code errorCode} and {@code fields} from the error body.
  *
  * @see <a
  *      href="http://www.salesforce.com/us/developer/docs/api/Content/sforce_api_calls_concepts_core_data_objects.htm">

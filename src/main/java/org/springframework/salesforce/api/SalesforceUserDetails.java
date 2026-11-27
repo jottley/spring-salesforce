@@ -15,13 +15,16 @@
  */
 package org.springframework.salesforce.api;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * User details returned by the OAuth2 userinfo endpoint (OpenID Connect property names). Extends
- * {@link SalesforceProfile}, but {@code photo} and {@code username} are never populated, because userinfo
- * sends {@code photos} and {@code preferred_username} instead; use {@link #getPreferredUsername()}.
- * Unknown properties in the JSON are ignored.
+ * {@link SalesforceProfile}. Userinfo names two properties differently from the Chatter profile, so they are
+ * mapped: {@code photos} ({@code picture} and {@code thumbnail}) becomes {@link #getPhoto()} (large and small
+ * URL), and {@code preferred_username} is returned by both {@link #getUsername()} and
+ * {@link #getPreferredUsername()}. Unknown properties in the JSON are ignored.
  *
  * @author Alexandra Leahu
  * @author Jared Ottley
@@ -61,6 +64,25 @@ public class SalesforceUserDetails extends SalesforceProfile {
         this.organizationId = organizationId;
         this.nickname = nickname;
         this.preferredUsername = preferredUsername;
+        // Userinfo has no "username" property; the inherited getter returns the preferred username
+        this.username = preferredUsername;
+    }
+
+    /**
+     * Sets the photo from the userinfo {@code photos} object, where {@code picture} is the large photo and
+     * {@code thumbnail} the small one. Called by Jackson (through the mixin); a missing or {@code null}
+     * {@code photos} leaves {@link #getPhoto()} {@code null}.
+     *
+     * @param photos the userinfo {@code photos} object, or {@code null}
+     */
+    private void setPhotos(Map<String, String> photos) {
+        if (photos == null) {
+            return;
+        }
+        Photo mapped = new Photo();
+        mapped.setLargePhotoUrl(photos.get("picture"));
+        mapped.setSmallPhotoUrl(photos.get("thumbnail"));
+        this.photo = mapped;
     }
 
     /**

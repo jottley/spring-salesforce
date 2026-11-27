@@ -23,7 +23,11 @@ package org.springframework.salesforce.api;
  *
  * @author Umut Utkan
  * @author Jared Ottley
+ * @deprecated the library never throws it; invalid record ids are rejected with an
+ *             {@link IllegalArgumentException} before any request is made. It will be removed in a future major
+ *             version.
  */
+@Deprecated
 public class InvalidIDException extends ApiException {
 
     /**
