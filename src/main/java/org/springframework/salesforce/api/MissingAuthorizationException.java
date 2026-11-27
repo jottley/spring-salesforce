@@ -23,7 +23,12 @@ package org.springframework.salesforce.api;
  * rejected token is reported as an {@link InvalidAuthorizationException}.
  *
  * @author Jared Ottley
+ * @deprecated the operations objects are always created with their {@code Salesforce} instance, so this is
+ *             effectively never thrown, and it does not signal a missing token. Catch
+ *             {@link InvalidAuthorizationException} for authorization failures instead. It will be removed in a
+ *             future major version.
  */
+@Deprecated
 public class MissingAuthorizationException extends ApiException {
 
     /**

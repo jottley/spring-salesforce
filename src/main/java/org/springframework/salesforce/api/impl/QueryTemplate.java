@@ -16,10 +16,13 @@
 package org.springframework.salesforce.api.impl;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.salesforce.api.QueryOperations;
 import org.springframework.salesforce.api.QueryResult;
+import org.springframework.salesforce.api.ResultItem;
 import org.springframework.salesforce.api.Salesforce;
 import org.springframework.web.client.RestTemplate;
 
@@ -102,7 +105,8 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
     }
 
     /**
-     * Pages through the result set and aggregates all sObjects into a single result set.
+     * Pages through the result set and aggregates all sObjects into a single result set, including deleted and
+     * archived records (it uses the {@code queryAll} resource).
      * USUAL WARNINGS ABOUT RESULT SET SIZE APPLY.
      *
      * @param query the SOQL query
@@ -110,15 +114,39 @@ public class QueryTemplate extends AbstractSalesForceOperations<Salesforce> impl
      */
     @Override
     public QueryResult queryAll(String query) {
+        return queryAll(query, true);
+    }
 
-        QueryResult page = query(query);
+    /**
+     * Pages through the result set and aggregates all sObjects into a single result set, optionally including
+     * deleted and archived records.
+     * USUAL WARNINGS ABOUT RESULT SET SIZE APPLY.
+     * <p>
+     * Later pages are fetched from the {@code nextRecordsUrl} that Salesforce returns with each page.
+     *
+     * @param query the SOQL query
+     * @param includeDeletedItems {@code true} to use the {@code queryAll} resource, {@code false} to use
+     *        {@code query} and exclude deleted and archived records
+     * @return a result containing the records from every page
+     */
+    @Override
+    public QueryResult queryAll(String query, boolean includeDeletedItems) {
+
+        QueryResult page = query(query, includeDeletedItems);
         // set up the final result set. (mostly to get the done flag set properly)
         QueryResult results = new QueryResult(page.getTotalSize(), true);
-        results.setRecords(page.getRecords());
+        // A new list, so appending later pages never changes the first page's own list
+        List<ResultItem> records = new ArrayList<>();
+        if (page.getRecords() != null) {
+            records.addAll(page.getRecords());
+        }
+        results.setRecords(records);
 
         while (StringUtils.isNotBlank(page.getNextRecordsUrl())) {
             page = nextPage(page.getNextRecordsUrl());
-            results.getRecords().addAll(page.getRecords());
+            if (page.getRecords() != null) {
+                records.addAll(page.getRecords());
+            }
         }
         return results;
     }

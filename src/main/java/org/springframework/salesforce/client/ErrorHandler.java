@@ -88,9 +88,7 @@ public class ErrorHandler extends DefaultResponseErrorHandler {
                 case "invalid_request" -> throw new OperationNotPermittedException(describe(error));
                 case "invalid_client_credentials" -> throw new InvalidAuthorizationException(describe(error));
                 case "invalid_grant" -> {
-                    if ("invalid user credentials".equals(error.get(ERROR_DESCRIPTION))) {
-                        throw new InvalidAuthorizationException(describe(error));
-                    } else if ("IP restricted or invalid login hours".equals(error.get(ERROR_DESCRIPTION))) {
+                    if ("IP restricted or invalid login hours".equals(error.get(ERROR_DESCRIPTION))) {
                         throw new OperationNotPermittedException(describe(error));
                     }
                     throw new InvalidAuthorizationException(describe(error));

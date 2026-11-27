@@ -233,7 +233,9 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 
 	@Test
 	public void queryAllFollowsNextRecordsUrlAndAggregatesRecords() {
-		mockServer.expect(requestTo(dataUrl() + "/query?q=SELECT%20Id%20FROM%20Account"))
+		// Salesforce hands out a /query/<locator> next-page URL even for a queryAll first page (confirmed live),
+		// and that cursor keeps returning deleted records, so the later pages are fetched from it as it is
+		mockServer.expect(requestTo(dataUrl() + "/queryAll?q=SELECT%20Id%20FROM%20Account"))
 				.andRespond(withSuccess(
 						page(3, false, "/services/data/v68.0/query/01g-2000", "001", "002"), MediaType.APPLICATION_JSON));
 		mockServer.expect(requestTo("https://na7.salesforce.com/services/data/v68.0/query/01g-2000"))
@@ -249,10 +251,35 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 
 	@Test
 	public void queryAllWithSinglePageDoesNotRequestMore() {
-		mockServer.expect(requestTo(dataUrl() + "/query?q=SELECT%20Id%20FROM%20Account"))
+		mockServer.expect(requestTo(dataUrl() + "/queryAll?q=SELECT%20Id%20FROM%20Account"))
 				.andRespond(withSuccess(page(1, true, null, "001"), MediaType.APPLICATION_JSON));
 
 		assertEquals(1, salesforce.queryOperations().queryAll("SELECT Id FROM Account").getRecords().size());
+		mockServer.verify();
+	}
+
+	@Test
+	public void queryAllExcludingDeletedUsesTheQueryResourceAndFollowsItsPages() {
+		mockServer.expect(requestTo(dataUrl() + "/query?q=SELECT%20Id%20FROM%20Account"))
+				.andRespond(withSuccess(
+						page(3, false, "/services/data/v68.0/query/01g-2000", "001", "002"), MediaType.APPLICATION_JSON));
+		mockServer.expect(requestTo("https://na7.salesforce.com/services/data/v68.0/query/01g-2000"))
+				.andRespond(withSuccess(page(3, true, null, "003"), MediaType.APPLICATION_JSON));
+
+		QueryResult result = salesforce.queryOperations().queryAll("SELECT Id FROM Account", false);
+
+		mockServer.verify();
+		assertEquals(3, result.getTotalSize());
+		assertTrue(result.isDone());
+		assertEquals(3, result.getRecords().size());
+	}
+
+	@Test
+	public void queryAllIncludingDeletedMatchesTheSingleArgumentForm() {
+		mockServer.expect(requestTo(dataUrl() + "/queryAll?q=SELECT%20Id%20FROM%20Account"))
+				.andRespond(withSuccess(page(1, true, null, "001"), MediaType.APPLICATION_JSON));
+
+		assertEquals(1, salesforce.queryOperations().queryAll("SELECT Id FROM Account", true).getRecords().size());
 		mockServer.verify();
 	}
 
@@ -321,6 +348,52 @@ public class OperationsTemplateEdgeCaseTest extends AbstractSalesforceTest {
 		mockServer.expect(requestTo(dataUrl() + "/connect/communities/c1/chatter/users")).andRespond(withNoContent());
 
 		assertTrue(salesforce.connectOperations().getCommunityUsers("c1").isEmpty());
+	}
+
+	@Test
+	public void communitiesAreEmptyWhenTheKeyIsMissing() {
+		mockServer.expect(requestTo(dataUrl() + "/connect/communities/"))
+				.andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+		assertEquals(List.of(), salesforce.connectOperations().getCommunities());
+	}
+
+	@Test
+	public void communityUsersAreEmptyWhenTheKeyIsMissing() {
+		mockServer.expect(requestTo(dataUrl() + "/connect/communities/c1/chatter/users"))
+				.andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+		assertEquals(List.of(), salesforce.connectOperations().getCommunityUsers("c1"));
+	}
+
+	@Test
+	public void getSObjectsIsEmptyWhenTheKeyIsMissing() {
+		mockServer.expect(requestTo(dataUrl() + "/sobjects"))
+				.andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+		assertEquals(List.of(), salesforce.sObjectsOperations().getSObjects());
+	}
+
+	@Test
+	public void listsAreEmptyWhenTheKeyIsPresentButNull() {
+		mockServer.expect(requestTo(dataUrl() + "/sobjects"))
+				.andRespond(withSuccess("{\"sobjects\":null}", MediaType.APPLICATION_JSON));
+
+		assertEquals(List.of(), salesforce.sObjectsOperations().getSObjects());
+	}
+
+	@Test
+	public void aMultipleChoicesResponseIsNotAnError() {
+		// Salesforce answers 300 when an external id matches several records; the body lists the candidates
+		mockServer.expect(requestTo("https://na7.salesforce.com/services/apexrest/Multi"))
+				.andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
+						.withStatus(org.springframework.http.HttpStatus.MULTIPLE_CHOICES)
+						.contentType(MediaType.APPLICATION_JSON)
+						.body("[\"/services/data/v68.0/sobjects/Account/001A\",\"/services/data/v68.0/sobjects/Account/001B\"]"));
+
+		String body = salesforce.customApiOperations().getForApexObject("/Multi", String.class);
+
+		assertEquals("[\"/services/data/v68.0/sobjects/Account/001A\",\"/services/data/v68.0/sobjects/Account/001B\"]", body);
 	}
 
 	// ---- ChatterTemplate ----

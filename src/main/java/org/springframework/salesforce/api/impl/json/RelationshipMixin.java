@@ -33,20 +33,17 @@ public class RelationshipMixin {
 
     /**
      * Binds the constructor arguments of {@code Relationship} to JSON properties.
-     * Salesforce sends the child sObject name as {@code childSObject}, not {@code childObject}, so the
-     * {@code childObject} argument is never bound and is always null.
-     * {@code Relationship.childSObject} is populated from the JSON {@code childSObject} property through
-     * the field that Jackson infers from {@code getChildSObject()}.
+     * Salesforce sends the child sObject name as {@code childSObject}.
      *
      * @param field the JSON {@code field} property
      * @param relationshipName the JSON {@code relationshipName} property
-     * @param childObject a JSON {@code childObject} property, which Salesforce does not send
+     * @param childSObject the JSON {@code childSObject} property
      */
     @JsonCreator
     RelationshipMixin(
             @JsonProperty("field") String field,
             @JsonProperty("relationshipName") String relationshipName,
-            @JsonProperty("childObject") String childObject) {
+            @JsonProperty("childSObject") String childSObject) {
     }
 
     /** Binds the JSON property {@code deprecatedAndHidden} to {@code Relationship.deprecatedAndHidden}. */

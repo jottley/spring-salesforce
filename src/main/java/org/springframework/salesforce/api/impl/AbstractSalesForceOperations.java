@@ -49,12 +49,25 @@ public class AbstractSalesForceOperations<T> {
      *
      * @throws MissingAuthorizationException if the API instance is {@code null}
      */
+    @SuppressWarnings("deprecation")
     protected void requireAuthorization() {
         // For now, we assume if we have an API instance, we're authorized
         // In a real implementation, you might want to check token validity
         if (api == null) {
             throw new MissingAuthorizationException("API instance is null - authorization required");
         }
+    }
+
+    /**
+     * Converts a list that may be {@code null} (as {@code readList} returns for a missing JSON entry) into an
+     * empty list, so callers never have to null-check a result.
+     *
+     * @param <T> the element type
+     * @param list the list, possibly {@code null}
+     * @return {@code list}, or an empty list if it was {@code null}
+     */
+    protected static <T> java.util.List<T> emptyIfNull(java.util.List<T> list) {
+        return list == null ? java.util.Collections.emptyList() : list;
     }
 
     /**

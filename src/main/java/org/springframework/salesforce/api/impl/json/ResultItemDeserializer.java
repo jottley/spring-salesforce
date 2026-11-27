@@ -42,6 +42,7 @@ public class ResultItemDeserializer extends JsonDeserializer<ResultItem>
      * Creates a deserializer for {@code ResultItem} values.
      */
     public ResultItemDeserializer() {
+        //NOOP
     }
 
     /** Name of the JSON property that holds the record type and URL. */
@@ -55,6 +56,10 @@ public class ResultItemDeserializer extends JsonDeserializer<ResultItem>
 
     /**
      * Reads a {@link ResultItem} from the JSON tree.
+     * <p>
+     * Each nested object becomes a {@link org.springframework.salesforce.api.QueryResult} if it has a
+     * {@code records} entry (a child relationship), a {@link ResultItem} if it has an {@code attributes} entry
+     * (a parent relationship), and otherwise stays a plain map (a compound field such as {@code BillingAddress}).
      *
      * @param jp the parser
      * @param ctxt the deserialization context, whose configuration is reused for nested conversions
@@ -71,16 +76,20 @@ public class ResultItemDeserializer extends JsonDeserializer<ResultItem>
 
         JsonNode jsonNode = jp.readValueAsTree();
         Map<String, Object> map = mapper.convertValue(jsonNode, Map.class);
-        ResultItem item = new ResultItem((String) ((Map) map.get(ATTRIBUTES)).get(TYPE),
-                (String) ((Map) map.get(ATTRIBUTES)).get(URL));
+        // A record always carries "attributes"; tolerate a value without it rather than failing the whole response
+        Map<String, Object> recordAttributes = map.get(ATTRIBUTES) instanceof Map<?, ?> found ? (Map<String, Object>) found : Map.of();
+        ResultItem item = new ResultItem((String) recordAttributes.get(TYPE), (String) recordAttributes.get(URL));
         map.remove(ATTRIBUTES);
 
         for(Map.Entry<String, Object> entry : map.entrySet()) {
             if(entry.getValue() instanceof Map<?, ?> inner) {
                 if(inner.get(RECORDS) != null) {
                     item.getAttributes().put(entry.getKey(), mapper.convertValue(jsonNode.get(entry.getKey()), QueryResult.class));
-                } else {
+                } else if(inner.containsKey(ATTRIBUTES)) {
                     item.getAttributes().put(entry.getKey(), mapper.convertValue(jsonNode.get(entry.getKey()), ResultItem.class));
+                } else {
+                    // A compound field such as BillingAddress or a geolocation: a nested object that is not a record
+                    item.getAttributes().put(entry.getKey(), entry.getValue());
                 }
             } else {
                 item.getAttributes().put(entry.getKey(), entry.getValue());

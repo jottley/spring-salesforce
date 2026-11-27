@@ -70,8 +70,10 @@ public class SalesforceOAuth2Client {
      * @param redirectUri the redirect URI; omitted if {@code null}
      * @param scope the space-separated scopes; omitted if {@code null}
      * @param state an opaque state value; omitted if {@code null}
-     * @return the URL to send the user to; parameter values are not URL-encoded, so encode any value containing
-     *         spaces or reserved characters (for example the scopes) before passing it
+     * @return the URL to send the user to. Characters that would break the URL (spaces, {@code &}, {@code #},
+     *         quotes, non-ASCII characters and a {@code %} that does not start an escape) are percent-encoded.
+     *         Values you have already encoded are left alone, so {@code %20} and {@code +} are passed through
+     *         unchanged; this also means a literal {@code %} or {@code +} cannot be sent through this method
      */
     public String buildAuthorizeUrl(String redirectUri, String scope, String state) {
         org.springframework.web.util.UriComponentsBuilder builder =
@@ -79,15 +81,54 @@ public class SalesforceOAuth2Client {
         builder.queryParam("response_type", "code");
         builder.queryParam("client_id", clientId);
         if (redirectUri != null) {
-            builder.queryParam("redirect_uri", redirectUri);
+            builder.queryParam("redirect_uri", encodeValue(redirectUri));
         }
         if (scope != null) {
-            builder.queryParam("scope", scope);
+            builder.queryParam("scope", encodeValue(scope));
         }
         if (state != null) {
-            builder.queryParam("state", state);
+            builder.queryParam("state", encodeValue(state));
         }
         return builder.build().toUriString();
+    }
+
+    /** Characters, besides letters and digits, that are left as they are in a query value. */
+    private static final String UNENCODED_QUERY_CHARACTERS = "-._~!$'()*+,;=:@/?";
+
+    /**
+     * Percent-encodes the characters of a query value that would break the URL, without touching characters
+     * that are already valid. In particular an existing {@code %XX} escape and a {@code +} pass through
+     * unchanged, so callers that encoded their own values (as earlier versions required) are not encoded twice.
+     *
+     * @param value the value to encode
+     * @return the value with unsafe characters percent-encoded as UTF-8
+     */
+    private static String encodeValue(String value) {
+        StringBuilder out = new StringBuilder(value.length());
+        byte[] bytes = value.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        for (int i = 0; i < bytes.length; i++) {
+            int c = bytes[i] & 0xFF;
+            boolean escape = c == '%' && i + 2 < bytes.length
+                    && isHex(bytes[i + 1]) && isHex(bytes[i + 2]);
+            boolean plain = c < 0x80 && (Character.isLetterOrDigit(c) || UNENCODED_QUERY_CHARACTERS.indexOf(c) >= 0);
+            if (plain || escape) {
+                out.append((char) c);
+            } else {
+                out.append('%').append(Character.toUpperCase(Character.forDigit(c >> 4, 16)))
+                        .append(Character.toUpperCase(Character.forDigit(c & 0xF, 16)));
+            }
+        }
+        return out.toString();
+    }
+
+    /**
+     * Tells whether a byte is an ASCII hexadecimal digit.
+     *
+     * @param b the byte
+     * @return {@code true} for {@code 0-9}, {@code a-f} and {@code A-F}
+     */
+    private static boolean isHex(byte b) {
+        return (b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F');
     }
 
     /**

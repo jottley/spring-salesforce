@@ -17,6 +17,7 @@ package org.springframework.salesforce.client;
 
 import java.util.Map;
 
+import org.springframework.salesforce.api.InvalidAuthorizationException;
 import org.springframework.salesforce.api.Salesforce;
 import org.springframework.salesforce.api.impl.SalesforceTemplate;
 import org.springframework.salesforce.connect.SalesforceServiceProvider;
@@ -42,7 +43,7 @@ public class BaseSalesforceFactory implements SalesforceFactory {
     /** The connected app consumer secret. */
     private final String clientSecret;
 
-    /** The token endpoint URL used for logins (despite the name); {@link #create} posts to this field directly, so it must not be {@code null}. */
+    /** The token endpoint URL used for logins (despite the name); read through {@link #getAuthorizeUrl()}, which falls back to the production URL if this is {@code null}. */
     private String authorizeUrl = DEFAULT_AUTH_URL;
 
     /** The rest template used for the token request. */
@@ -76,8 +77,7 @@ public class BaseSalesforceFactory implements SalesforceFactory {
     /**
      * Sets the token endpoint URL used for logins (despite the method name, this is the token endpoint).
      *
-     * @param authorizeUrl the token endpoint URL; do not pass {@code null}, because {@link #create} would then
-     *        post to a {@code null} URL and fail (only {@link #getAuthorizeUrl()} falls back to the default)
+     * @param authorizeUrl the token endpoint URL; {@code null} restores the production token URL
      */
     public void setAuthorizeUrl(String authorizeUrl) {
         this.authorizeUrl = authorizeUrl;
@@ -86,8 +86,7 @@ public class BaseSalesforceFactory implements SalesforceFactory {
     /**
      * Returns the token endpoint URL used for logins.
      *
-     * @return the configured URL, or the production token URL if none is set (note that {@link #create} does
-     *         not apply this fallback)
+     * @return the configured URL, or the production token URL if none is set; this is the URL {@link #create} posts to
      */
     public String getAuthorizeUrl() {
       return (this.authorizeUrl == null) ? DEFAULT_AUTH_URL : this.authorizeUrl;
@@ -103,7 +102,8 @@ public class BaseSalesforceFactory implements SalesforceFactory {
      * @param securityToken the user's security token; may be {@code null}
      * @return a new {@link Salesforce} instance
      * @throws org.springframework.salesforce.api.InvalidAuthorizationException for a 400 response whose error
-     *         means the credentials or client were rejected (default rest template only)
+     *         means the credentials or client were rejected (default rest template only), or if a successful
+     *         response contains no {@code access_token} (an empty body, or a body without the entry)
      * @throws org.springframework.salesforce.api.OperationNotPermittedException for other 400 responses (default
      *         rest template only)
      * @throws org.springframework.salesforce.api.RateLimitExceededException for a {@code rate_limit_exceeded}
@@ -121,8 +121,13 @@ public class BaseSalesforceFactory implements SalesforceFactory {
         map.add("username", username);
         map.add("password", password + (securityToken == null ? "" : securityToken));
 
-        Map<String, String> token = restTemplate.postForObject(this.authorizeUrl, map, Map.class);
-        SalesforceTemplate template = new SalesforceTemplate(token.get("access_token"));
+        Map<String, String> token = restTemplate.postForObject(getAuthorizeUrl(), map, Map.class);
+        String accessToken = token == null ? null : token.get("access_token");
+        if (accessToken == null || accessToken.isBlank()) {
+            // Without this a missing token would build an unauthenticated binding that only fails on first use
+            throw new InvalidAuthorizationException("The token response contained no access token.");
+        }
+        SalesforceTemplate template = new SalesforceTemplate(accessToken);
         String instanceUrl = token.get("instance_url");
         if (instanceUrl != null) {
             template.setInstanceUrl(instanceUrl);

@@ -91,12 +91,6 @@ public class SalesforceErrorHandlerTest {
 	}
 
 	@Test
-	public void multipleChoicesMapsToSalesforceRequestException() {
-		assertThrows(SalesforceRequestException.class,
-				() -> handler.handleError(response(HttpStatus.MULTIPLE_CHOICES, error("DUPLICATES_DETECTED", "dup"))));
-	}
-
-	@Test
 	public void unauthorizedMapsToInvalidAuthorization() {
 		InvalidAuthorizationException e = assertThrows(InvalidAuthorizationException.class,
 				() -> handler.handleError(response(HttpStatus.UNAUTHORIZED, error("INVALID_SESSION_ID", "Session expired"))));

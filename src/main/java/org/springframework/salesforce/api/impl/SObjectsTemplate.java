@@ -68,8 +68,8 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
     /**
      * Lists the sObjects available in the org.
      *
-     * @return one map of properties per sObject; an empty list if the response had no body, or {@code null}
-     *         if the body has no {@code sobjects} entry
+     * @return one map of properties per sObject; an empty list if the response had no body or no
+     *         {@code sobjects} entry
      */
     @Override
     public List<Map> getSObjects() {
@@ -77,7 +77,7 @@ public class SObjectsTemplate extends AbstractSalesForceOperations<Salesforce> i
         JsonNode dataNode = restTemplate.getForObject(api.getBaseUrl() + "/{version}/sobjects", JsonNode.class, getVersion());
 
         if (dataNode !=null) {
-            return api.readList(dataNode.get("sobjects"), Map.class);
+            return emptyIfNull(api.readList(dataNode.get("sobjects"), Map.class));
         }
 
         return Collections.emptyList();

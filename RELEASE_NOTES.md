@@ -36,9 +36,13 @@ It used to keep the first login for a username forever, even if you passed a new
 - `SObjectSummary` and `SObjectDetail`: `isLayoutable()`, `isDeprecatedAndHidden()` and `isRetrieveable()` were **always false**, because of misspelled JSON names. They now return Salesforce's values. If you serialize those models, the JSON names are now `layoutable`, `deprecatedAndHidden` and `retrieveable`.
 - `CommunityUser.isInThisCommunity()` was always false. It is now populated, and both `isInThisCommunity` and `inThisCommunity` are accepted.
 
+**8. `QueryOperations.queryAll(String)` now includes deleted and archived records.**
+Despite its name it used the `query` resource and excluded them. It now uses the `queryAll` resource, so a query can return records from the Recycle Bin. For the old result, call the new `queryAll(String, boolean)` with `false`, which pages through the `query` resource and excludes them. `query(String, true)` is unchanged. The method also no longer appends later pages to the first page's own list.
+
 ## Deprecated
 
 - `ChatterOperations.getStatus(...)` and `updateStatus(...)`, and `SalesforceProfileMapper.updateStatus`. Salesforce retired the user status resource in API 25, below this library's minimum of 31, so these always fail with `ResourceNotFoundException`. There is no replacement; they will be removed in a future major version.
+- `MissingAuthorizationException` and `InvalidIDException`. The library effectively never throws them: operations objects always have their `Salesforce` instance, and invalid record ids are rejected with `IllegalArgumentException`. Neither signals a missing token; catch `InvalidAuthorizationException` for that. They will be removed in a future major version.
 
 ## Bug fixes
 
@@ -47,19 +51,25 @@ It used to keep the first login for a username forever, even if you passed a new
 - **A response header with `per-app-api-usage` caused every call to fail** with `NumberFormatException`, after the request had already succeeded server-side. The usage header is now parsed safely and a malformed one is ignored. Used and max are updated together.
 - **`getBlob` threw a `NullPointerException`** on an empty or 204 response. It now returns an empty stream, never null.
 - **`search` failed on API version 37 and later.** From v37.0 Salesforce returns SOSL results as `{"searchRecords": [...]}`; versions 31 to 36 return a bare array. The library only understood the array, so it threw an `IllegalArgumentException` on every newer version, including the old default of v37.0. Both shapes are now accepted, and a search with no hits (or an empty response) returns an empty list instead of null. Found and verified by running against a live org at every version from 31 to 68.
+- **A query that selected a compound field failed.** `SELECT BillingAddress FROM Account` (or any address or geolocation field) threw a `NullPointerException` inside the response deserializer, surfacing as a `RestClientException`, because the nested object has no `attributes` entry. The compound field is now returned in the record's attributes as a `Map<String, Object>` with the keys Salesforce sends (`city`, `street`, and so on). Found by running against a live org.
+- **`getSObjects`, `getCommunities` and `getCommunityUsers` returned `null`** when the response had no `sobjects`, `communities` or `users` entry, though they returned an empty list for an empty body. They now return an empty list in both cases. Code that checked these results for `null` should check `isEmpty()` instead.
+- **`BaseSalesforceFactory.create` failed obscurely on a bad token response.** An empty body caused a `NullPointerException`, and a body with no `access_token` silently produced a binding with no token that failed on first use. Both now throw `InvalidAuthorizationException` ("The token response contained no access token."). The login also now honors the `getAuthorizeUrl()` fallback, so `setAuthorizeUrl(null)` restores the production token URL instead of failing.
+- **`SalesforceOAuth2Client.buildAuthorizeUrl` produced broken URLs for values with a space, `&` or `#`.** A multi-scope value such as `api refresh_token` was put into the URL as is. Such characters are now percent-encoded. Values you encoded yourself are left alone (`%20` and `+` pass through unchanged), so existing code that pre-encodes keeps working. A literal `%` or `+` can't be sent through this method.
+- **`SalesforceUserDetails.getPhoto()` and `getUsername()` were always `null`.** The userinfo endpoint sends the photo as `photos` (`picture` and `thumbnail`) and the username as `preferred_username`, neither of which was mapped. `getPhoto()` now returns the large (`picture`) and small (`thumbnail`) URLs, and `getUsername()` returns the preferred username, the same value as `getPreferredUsername()`.
 - **`QueryTemplate.nextPage`** built a `null/services/...` URL when no instance URL was set. It now goes to the same host as the first page.
 
 ## New
 
 - `LimitsResults` keeps limits it doesn't model, so limits Salesforce adds later appear in `getAdditionalProperties()`. `getAdditionalLimit(name)` returns one as an `Optional<LimitResult>`, empty if it isn't shaped like a limit.
 - `ApiOperations.MINIMUM_API_VERSION` and `InvalidSalesforceApiVersionException(String version, int minimum)`.
+- `QueryOperations.queryAll(String query, boolean includeDeletedItems)`: pages through every result like `queryAll(String)`, and `false` excludes deleted and archived records. It is a new abstract method, so a class that implements `QueryOperations` itself must add it.
 
 ## Build and internal
 
 - JaCoCo now runs on `mvn test`, and the **build fails below 85% instruction coverage**. This also applies to `mvn package` and the publish workflow (`mvn deploy`). The threshold is the `jacoco.minimum.instruction.coverage` property. CI uploads the coverage report and writes a summary.
 - Every class and member, including private ones, now has Javadoc, and the build enforces it: `maven-javadoc-plugin` runs with `doclint=all` and `failOnWarnings`, so `mvn package` (and CI and the publish workflow) fails if new code is undocumented or has invalid Javadoc. A second, check-only pass includes private members; the published Javadoc still lists only public and protected members.
 - Mockito moved from 2.11.0 to 5.24.0, test scope only.
-- Tests grew from 47 to 231 `@Test` methods.
+- Tests grew from 47 to 249 `@Test` methods.
 - A manual live check (`src/test/java/.../live/LiveSalesforceCheck.java`) runs the library against a real org. It is not part of `mvn test` and skips itself without credentials. See the README.
 - Dead code was removed from the query, search and API templates, the error handlers and the cache.
 

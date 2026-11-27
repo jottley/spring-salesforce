@@ -18,7 +18,6 @@ package org.springframework.salesforce.api.impl.json;
 import org.springframework.salesforce.api.Photo;
 import org.springframework.salesforce.api.SalesforceProfile;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -32,24 +31,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class SalesforceProfileMixin {
 
     /**
-     * Mirrors the property names of {@code SalesforceProfile}. {@code SalesforceProfile} has no matching
-     * constructor, so Jackson ignores this creator; {@code id}, {@code email}, {@code firstName},
+     * Creates the mixin. It declares no creator: {@code id}, {@code email}, {@code firstName},
      * {@code lastName}, {@code name} and {@code username} are set directly on the fields that Jackson infers
-     * from the getters. Only {@code photo} is bound explicitly, by the field annotation below.
-     *
-     * @param id the JSON {@code id} property
-     * @param firstName the JSON {@code firstName} property
-     * @param lastName the JSON {@code lastName} property
-     * @param email the JSON {@code email} property
-     * @param name the JSON {@code name} property
+     * from the getters, and only {@code photo} is bound explicitly, by the field annotation below.
      */
-    @JsonCreator
-    SalesforceProfileMixin(
-            @JsonProperty("id") String id,
-            @JsonProperty("firstName") String firstName,
-            @JsonProperty("lastName") String lastName,
-            @JsonProperty("email") String email,
-            @JsonProperty("name") String name) {
+    SalesforceProfileMixin() {
+        //NOOP
     }
 
     /** Binds the JSON property {@code photo} to {@code SalesforceProfile.photo}. */
