@@ -184,6 +184,111 @@ public class SalesforceOAuth2ClientTest {
     server.verify();
   }
 
+  private static final String VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+  private static final String CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+
+  @Test
+  public void buildAuthorizeUrlAddsThePkceChallenge() {
+    assertEquals(
+        AUTHORIZE
+            + "&redirect_uri=https://app/cb&scope=api&state=xyz"
+            + "&code_challenge="
+            + CHALLENGE
+            + "&code_challenge_method=S256",
+        client.buildAuthorizeUrl("https://app/cb", "api", "xyz", CHALLENGE));
+  }
+
+  @Test
+  public void buildAuthorizeUrlWithANullChallengeHasNoPkceParameters() {
+    assertEquals(
+        client.buildAuthorizeUrl("https://app/cb", "api", "xyz"),
+        client.buildAuthorizeUrl("https://app/cb", "api", "xyz", null));
+  }
+
+  @Test
+  public void aBlankChallengeOrVerifierIsTreatedAsNone() {
+    assertEquals(
+        client.buildAuthorizeUrl("https://app/cb", "api", "xyz"),
+        client.buildAuthorizeUrl("https://app/cb", "api", "xyz", " "));
+    server
+        .expect(requestTo(TOKEN_URL))
+        .andExpect(
+            content()
+                .string("grant_type=authorization_code&code=abc&client_id=id&client_secret=secret"))
+        .andRespond(withSuccess("{\"access_token\":\"tok\"}", MediaType.APPLICATION_JSON));
+
+    client.exchangeForAccess("abc", null, "");
+    server.verify();
+  }
+
+  @Test
+  public void exchangeForAccessSendsTheCodeVerifier() {
+    server
+        .expect(requestTo(TOKEN_URL))
+        .andExpect(
+            content()
+                .string(
+                    "grant_type=authorization_code&code=abc&client_id=id&client_secret=secret"
+                        + "&redirect_uri=https%3A%2F%2Fapp%2Fcb&code_verifier="
+                        + VERIFIER))
+        .andRespond(withSuccess("{\"access_token\":\"tok\"}", MediaType.APPLICATION_JSON));
+
+    assertEquals(
+        "tok", client.exchangeForAccess("abc", "https://app/cb", VERIFIER).getAccessToken());
+    server.verify();
+  }
+
+  @Test
+  public void exchangeForAccessWithoutAVerifierIsUnchanged() {
+    server
+        .expect(requestTo(TOKEN_URL))
+        .andExpect(
+            content()
+                .string("grant_type=authorization_code&code=abc&client_id=id&client_secret=secret"))
+        .andRespond(withSuccess("{\"access_token\":\"tok\"}", MediaType.APPLICATION_JSON));
+
+    client.exchangeForAccess("abc", null);
+    server.verify();
+  }
+
+  @Test
+  public void aPublicClientSendsNoSecret() {
+    SalesforceOAuth2Client publicClient =
+        new SalesforceOAuth2Client("id", null, "https://login/authorize", TOKEN_URL);
+    MockRestServiceServer publicServer =
+        MockRestServiceServer.createServer(publicClient.getRestTemplate());
+    publicServer
+        .expect(requestTo(TOKEN_URL))
+        .andExpect(
+            content()
+                .string(
+                    "grant_type=authorization_code&code=abc&client_id=id&code_verifier="
+                        + VERIFIER))
+        .andRespond(withSuccess("{\"access_token\":\"tok\"}", MediaType.APPLICATION_JSON));
+    publicServer
+        .expect(requestTo(TOKEN_URL))
+        .andExpect(content().string("grant_type=refresh_token&refresh_token=ref&client_id=id"))
+        .andRespond(withSuccess("{\"access_token\":\"new\"}", MediaType.APPLICATION_JSON));
+
+    publicClient.exchangeForAccess("abc", null, VERIFIER);
+    publicClient.refreshAccess("ref");
+    publicServer.verify();
+  }
+
+  @Test
+  public void aBlankSecretIsTreatedAsNoSecret() {
+    SalesforceOAuth2Client blank =
+        new SalesforceOAuth2Client("id", "  ", "https://login/authorize", TOKEN_URL);
+    MockRestServiceServer blankServer = MockRestServiceServer.createServer(blank.getRestTemplate());
+    blankServer
+        .expect(requestTo(TOKEN_URL))
+        .andExpect(content().string("grant_type=refresh_token&refresh_token=ref&client_id=id"))
+        .andRespond(withSuccess("{\"access_token\":\"new\"}", MediaType.APPLICATION_JSON));
+
+    blank.refreshAccess("ref");
+    blankServer.verify();
+  }
+
   @Test
   public void emptyTokenResponseBodyIsRejected() {
     server.expect(requestTo(TOKEN_URL)).andRespond(withNoContent());

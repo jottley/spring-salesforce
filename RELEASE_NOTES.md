@@ -63,13 +63,15 @@ Despite its name it used the `query` resource and excluded them. It now uses the
 - `LimitsResults` keeps limits it doesn't model, so limits Salesforce adds later appear in `getAdditionalProperties()`. `getAdditionalLimit(name)` returns one as an `Optional<LimitResult>`, empty if it isn't shaped like a limit.
 - `ApiOperations.MINIMUM_API_VERSION` and `InvalidSalesforceApiVersionException(String version, int minimum)`.
 - `QueryOperations.queryAll(String query, boolean includeDeletedItems)`: pages through every result like `queryAll(String)`, and `false` excludes deleted and archived records. It is a new abstract method, so a class that implements `QueryOperations` itself must add it.
+- **PKCE support (RFC 7636, `S256`)**, which External Client Apps can require (the default for new apps). New `Pkce.generateCodeVerifier()` and `Pkce.codeChallenge(String)`, `SalesforceOAuth2Client.buildAuthorizeUrl(redirectUri, scope, state, codeChallenge)` and `exchangeForAccess(code, redirectUri, codeVerifier)`. The existing three- and two-argument methods are unchanged. A blank challenge or verifier is treated as none. The library does not store the verifier: keep it between the redirect and the callback.
+- **Public clients.** A `null` or blank client secret is no longer sent with the authorization-code and refresh-token requests. Client credentials requests still send it, because that flow needs one.
 
 ## Build and internal
 
 - JaCoCo now runs on `mvn test`, and the **build fails below 85% instruction coverage**. This also applies to `mvn package` and the publish workflow (`mvn deploy`). The threshold is the `jacoco.minimum.instruction.coverage` property. CI uploads the coverage report and writes a summary.
 - Every class and member, including private ones, now has Javadoc, and the build enforces it: `maven-javadoc-plugin` runs with `doclint=all` and `failOnWarnings`, so `mvn package` (and CI and the publish workflow) fails if new code is undocumented or has invalid Javadoc. A second, check-only pass includes private members; the published Javadoc still lists only public and protected members.
 - Mockito moved from 2.11.0 to 5.24.0, test scope only.
-- Tests grew from 47 to 249 `@Test` methods.
+- Tests grew from 47 to 261 `@Test` methods.
 - A manual live check (`src/test/java/.../live/LiveSalesforceCheck.java`) runs the library against a real org. It is not part of `mvn test` and skips itself without credentials. See the README.
 - Dead code was removed from the query, search and API templates, the error handlers and the cache.
 

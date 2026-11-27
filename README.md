@@ -16,16 +16,21 @@ For flows where a user signs in to Salesforce, create a Connected App (or Extern
 SalesforceServiceProvider provider = new SalesforceServiceProvider(clientId, clientSecret); // or (clientId, clientSecret, true) for a sandbox
 SalesforceOAuth2Client oauth = provider.getOAuth2Client();
 
-// 1. Send the user here (state should be a random value you verify on return)
-String authorizeUrl = oauth.buildAuthorizeUrl("https://myapp.example.com/callback", "api refresh_token", state);
+// 1. Send the user here (state should be a random value you verify on return).
+//    Keep the PKCE verifier (for example in the user's session) until the callback.
+String verifier = Pkce.generateCodeVerifier();
+String authorizeUrl = oauth.buildAuthorizeUrl("https://myapp.example.com/callback", "api refresh_token", state,
+        Pkce.codeChallenge(verifier));
 
-// 2. In your callback handler, exchange the code Salesforce sends back
-AccessGrant grant = oauth.exchangeForAccess(code, "https://myapp.example.com/callback");
+// 2. In your callback handler, exchange the code Salesforce sends back, with the same verifier
+AccessGrant grant = oauth.exchangeForAccess(code, "https://myapp.example.com/callback", verifier);
 Salesforce salesforce = provider.getApi(grant.getAccessToken());
 
 // 3. When the access token expires (requires the refresh_token scope)
 AccessGrant refreshed = oauth.refreshAccess(grant.getRefreshToken());
 ```
+
+External Client Apps can require PKCE (it is the default for new apps), and Salesforce recommends it for every app, so pass the code challenge and the verifier as shown. If you send a challenge you must send the verifier, and the reverse. The older `buildAuthorizeUrl(redirectUri, scope, state)` and `exchangeForAccess(code, redirectUri)` still work for apps that do not require PKCE. If your app is a public client, create the client with a `null` secret and none is sent with the authorization-code and refresh requests; whether Salesforce accepts that depends on the app's settings. The library does not store the verifier; keep it between the redirect and the callback, as you do for `state`.
 
 The redirect URI must match the one configured on the app. The `refresh_token` scope must be granted to receive a refresh token.
 

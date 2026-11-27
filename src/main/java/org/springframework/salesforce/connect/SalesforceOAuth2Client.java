@@ -61,7 +61,8 @@ public class SalesforceOAuth2Client {
    * Creates a client for the given endpoints.
    *
    * @param clientId the connected app consumer key
-   * @param clientSecret the connected app consumer secret
+   * @param clientSecret the connected app consumer secret; {@code null} or blank for a public
+   *     client, in which case no secret is sent with the authorization-code and refresh requests
    * @param authorizeUrl the OAuth2 authorization endpoint URL
    * @param accessTokenUrl the OAuth2 token endpoint URL
    */
@@ -75,7 +76,9 @@ public class SalesforceOAuth2Client {
   }
 
   /**
-   * Builds the authorization URL for the authorization code flow.
+   * Builds the authorization URL for the authorization code flow, without PKCE. Apps that require
+   * PKCE (the default for new External Client Apps) need {@link #buildAuthorizeUrl(String, String,
+   * String, String)}.
    *
    * @param redirectUri the redirect URI; omitted if {@code null}
    * @param scope the space-separated scopes; omitted if {@code null}
@@ -87,6 +90,25 @@ public class SalesforceOAuth2Client {
    *     sent through this method
    */
   public String buildAuthorizeUrl(String redirectUri, String scope, String state) {
+    return buildAuthorizeUrl(redirectUri, scope, state, null);
+  }
+
+  /**
+   * Builds the authorization URL for the authorization code flow, with a PKCE code challenge.
+   *
+   * <p>Create the challenge from a verifier with {@link Pkce#codeChallenge(String)}, keep the
+   * verifier, and pass it to {@link #exchangeForAccess(String, String, String)}.
+   *
+   * @param redirectUri the redirect URI; omitted if {@code null}
+   * @param scope the space-separated scopes; omitted if {@code null}
+   * @param state an opaque state value; omitted if {@code null}
+   * @param codeChallenge the PKCE code challenge (method {@code S256}); if {@code null} or blank no
+   *     PKCE parameters are added
+   * @return the URL to send the user to; the encoding rules of {@link #buildAuthorizeUrl(String,
+   *     String, String)} apply
+   */
+  public String buildAuthorizeUrl(
+      String redirectUri, String scope, String state, String codeChallenge) {
     org.springframework.web.util.UriComponentsBuilder builder =
         org.springframework.web.util.UriComponentsBuilder.fromUriString(authorizeUrl);
     builder.queryParam("response_type", "code");
@@ -99,6 +121,10 @@ public class SalesforceOAuth2Client {
     }
     if (state != null) {
       builder.queryParam("state", encodeValue(state));
+    }
+    if (codeChallenge != null && !codeChallenge.isBlank()) {
+      builder.queryParam("code_challenge", encodeValue(codeChallenge));
+      builder.queryParam("code_challenge_method", "S256");
     }
     return builder.build().toUriString();
   }
@@ -146,7 +172,9 @@ public class SalesforceOAuth2Client {
   }
 
   /**
-   * Exchanges an authorization code for an access token.
+   * Exchanges an authorization code for an access token, without a PKCE verifier. Apps that require
+   * PKCE (the default for new External Client Apps) need {@link #exchangeForAccess(String, String,
+   * String)}.
    *
    * @param authorizationCode the code returned to the redirect URI
    * @param redirectUri the redirect URI used when authorizing; omitted if {@code null}
@@ -157,20 +185,56 @@ public class SalesforceOAuth2Client {
    * @throws IllegalStateException if the response has no body
    */
   public AccessGrant exchangeForAccess(String authorizationCode, String redirectUri) {
+    return exchangeForAccess(authorizationCode, redirectUri, null);
+  }
+
+  /**
+   * Exchanges an authorization code for an access token, proving possession of the PKCE verifier.
+   *
+   * <p>The client secret is sent only if one was configured, so a public client (no secret) can use
+   * this method.
+   *
+   * @param authorizationCode the code returned to the redirect URI
+   * @param redirectUri the redirect URI used when authorizing; omitted if {@code null}
+   * @param codeVerifier the verifier whose challenge was sent in {@link #buildAuthorizeUrl(String,
+   *     String, String, String)}; omitted if {@code null} or blank
+   * @return the token response
+   * @throws org.springframework.web.client.RestClientException if the token endpoint returns an
+   *     error status or the request fails (the default error handler is used, not {@link
+   *     org.springframework.salesforce.client.ErrorHandler})
+   * @throws IllegalStateException if the response has no body
+   */
+  public AccessGrant exchangeForAccess(
+      String authorizationCode, String redirectUri, String codeVerifier) {
     MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
     parameters.add("grant_type", "authorization_code");
     parameters.add("code", authorizationCode);
     parameters.add("client_id", clientId);
-    parameters.add("client_secret", clientSecret);
+    addClientSecret(parameters);
     if (redirectUri != null) {
       parameters.add("redirect_uri", redirectUri);
+    }
+    if (codeVerifier != null && !codeVerifier.isBlank()) {
+      parameters.add("code_verifier", codeVerifier);
     }
 
     return postForToken(parameters);
   }
 
   /**
-   * Obtains a new access token using a refresh token.
+   * Adds the client secret to a token request, unless none is configured (a public client).
+   *
+   * @param parameters the form parameters for the token request
+   */
+  private void addClientSecret(MultiValueMap<String, String> parameters) {
+    if (clientSecret != null && !clientSecret.isBlank()) {
+      parameters.add("client_secret", clientSecret);
+    }
+  }
+
+  /**
+   * Obtains a new access token using a refresh token. The client secret is sent only if one was
+   * configured.
    *
    * @param refreshToken the refresh token
    * @return the token response
@@ -184,7 +248,7 @@ public class SalesforceOAuth2Client {
     parameters.add("grant_type", "refresh_token");
     parameters.add("refresh_token", refreshToken);
     parameters.add("client_id", clientId);
-    parameters.add("client_secret", clientSecret);
+    addClientSecret(parameters);
 
     return postForToken(parameters);
   }
