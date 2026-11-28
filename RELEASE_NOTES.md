@@ -1,6 +1,6 @@
-# Release notes (draft)
+# Release notes
 
-**Version:** 3.0.0 (the current version is `3.0.0-SNAPSHOT`).
+**Version:** 3.0.0
 
 ## Upgrade notes: please read first
 
@@ -39,6 +39,9 @@ It used to keep the first login for a username forever, even if you passed a new
 **8. `QueryOperations.queryAll(String)` now includes deleted and archived records.**
 Despite its name it used the `query` resource and excluded them. It now uses the `queryAll` resource, so a query can return records from the Recycle Bin. For the old result, call the new `queryAll(String, boolean)` with `false`, which pages through the `query` resource and excludes them. `query(String, true)` is unchanged. The method also no longer appends later pages to the first page's own list.
 
+**9. The `-tests` jar is no longer published.**
+The build used to attach a `tests` jar (the test classes and fixtures) to every deploy. Nothing in the library needs it, so it is gone. Anything that depended on the `tests` classifier must stop using it.
+
 ## Deprecated
 
 - `ChatterOperations.getStatus(...)` and `updateStatus(...)`, and `SalesforceProfileMapper.updateStatus`. Salesforce retired the user status resource in API 25, below this library's minimum of 31, so these always fail with `ResourceNotFoundException`. There is no replacement; they will be removed in a future major version.
@@ -60,7 +63,7 @@ Despite its name it used the `query` resource and excluded them. It now uses the
 
 ## New
 
-- `LimitsResults` keeps limits it doesn't model, so limits Salesforce adds later appear in `getAdditionalProperties()`. `getAdditionalLimit(name)` returns one as an `Optional<LimitResult>`, empty if it isn't shaped like a limit.
+- `LimitsResults.getAdditionalLimit(name)` returns a limit the library doesn't model as an `Optional<LimitResult>`, empty if it isn't shaped like a limit. Such limits were already kept in `getAdditionalProperties()`.
 - `ApiOperations.MINIMUM_API_VERSION` and `InvalidSalesforceApiVersionException(String version, int minimum)`.
 - `QueryOperations.queryAll(String query, boolean includeDeletedItems)`: pages through every result like `queryAll(String)`, and `false` excludes deleted and archived records. It is a new abstract method, so a class that implements `QueryOperations` itself must add it.
 - **PKCE support (RFC 7636, `S256`)**, which External Client Apps can require (the default for new apps). New `Pkce.generateCodeVerifier()` and `Pkce.codeChallenge(String)`, `SalesforceOAuth2Client.buildAuthorizeUrl(redirectUri, scope, state, codeChallenge)` and `exchangeForAccess(code, redirectUri, codeVerifier)`. The existing three- and two-argument methods are unchanged. A blank challenge or verifier is treated as none. The library does not store the verifier: keep it between the redirect and the callback.
@@ -69,10 +72,13 @@ Despite its name it used the `query` resource and excluded them. It now uses the
 
 ## Build and internal
 
-- JaCoCo now runs on `mvn test`, and the **build fails below 85% instruction coverage**. This also applies to `mvn package` and the publish workflow (`mvn deploy`). The threshold is the `jacoco.minimum.instruction.coverage` property. CI uploads the coverage report and writes a summary.
-- Every class and member, including private ones, now has Javadoc, and the build enforces it: `maven-javadoc-plugin` runs with `doclint=all` and `failOnWarnings`, so `mvn package` (and CI and the publish workflow) fails if new code is undocumented or has invalid Javadoc. A second, check-only pass includes private members; the published Javadoc still lists only public and protected members.
-- Mockito moved from 2.11.0 to 5.24.0, test scope only.
-- Tests grew from 47 to 267 `@Test` methods.
+- JaCoCo now runs on `mvn test`, and the **build fails below 85% instruction coverage**. This also applies to `mvn package` and to a release, which builds first. The threshold is the `jacoco.minimum.instruction.coverage` property. CI uploads the coverage report and writes a summary.
+- Every class and member, including private ones, now has Javadoc, and the build enforces it: `maven-javadoc-plugin` runs with `doclint=all` and `failOnWarnings`, so `mvn package` (and CI and a release) fails if new code is undocumented or has invalid Javadoc. A second, check-only pass includes private members; the published Javadoc still lists only public and protected members.
+- **Dependency updates.** Jackson 2.17.2 to 2.18.11 and Logback 1.5.19 to 1.5.34. Both are compile-scope dependencies, so applications get the new versions through this library; these are minor and patch updates and need no code changes. Mockito moved from 2.11.0 to 5.24.0 (test scope only). The Java baseline (17), Spring (7.0.8) and Apache HttpClient (5.6.3) are unchanged.
+- **Code format.** All Java source is formatted with Google Java Format through the Spotless Maven plugin, so the whole codebase was reformatted (spaces, not tabs). Run `mvn spotless:apply` before committing; `mvn spotless:check` and CI fail on a violation.
+- **Releases.** `maven-release-plugin` is configured: `mvn release:prepare release:perform` drops `-SNAPSHOT`, tags `v<version>`, sets the next development version and deploys to Repsy. The *Maven Release* workflow runs it from GitHub (manual, `master` only, with a dry run on by default); it replaces the old workflow that ran on a GitHub release. See the README.
+- **CI.** The build workflow now runs on `develop` as well as `master`, checks the code format first, cancels a superseded run, and uploads the test reports along with the coverage report.
+- Tests grew from 47 to 267 (the number `mvn test` runs; the live check below is one more `@Test`).
 - A manual live check (`src/test/java/.../live/LiveSalesforceCheck.java`) runs the library against a real org. It is not part of `mvn test` and skips itself without credentials. See the README.
 - Dead code was removed from the query, search and API templates, the error handlers and the cache.
 
