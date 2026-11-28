@@ -1,0 +1,33 @@
+{
+  "totalSize": 2,
+  "done": true,
+  "records": [
+    {
+      "attributes": {
+        "type": "Account",
+        "url": "/services/data/v68.0/sobjects/Account/001A000000df63xIAA"
+      },
+      "Id": "001A000000df63xIAA",
+      "BillingAddress": {
+        "city": "Springfield",
+        "country": null,
+        "countryCode": null,
+        "geocodeAccuracy": null,
+        "latitude": null,
+        "longitude": null,
+        "postalCode": "12345",
+        "state": null,
+        "stateCode": null,
+        "street": "1 Main St"
+      }
+    },
+    {
+      "attributes": {
+        "type": "Account",
+        "url": "/services/data/v68.0/sobjects/Account/001A000000df63yIAA"
+      },
+      "Id": "001A000000df63yIAA",
+      "BillingAddress": null
+    }
+  ]
+}

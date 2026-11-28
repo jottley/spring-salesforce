@@ -1,16 +1,14 @@
 /**
  * Copyright (C) 2019-2026 https://github.com/jottley/spring-social-salesforce
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
 package org.springframework.salesforce.api;
@@ -22,25 +20,28 @@ package org.springframework.salesforce.api;
  */
 public interface LimitsOperations {
 
+  /**
+   * Retrieves the organization limits from the Salesforce Limits resource.
+   *
+   * @return the organization limits
+   */
+  public LimitsResults getLimits();
 
-    /**
-     * Retrieve the organization limits
-     *
-     * @return LimitsResults
-     */
-    public LimitsResults getLimits();
+  /**
+   * Gets the current Daily API limit. This value is read from the {@code Sforce-Limit-Info} header
+   * of the most recent response that carried an {@code api-usage} entry, so it is not updated by
+   * responses without one.
+   *
+   * @return the daily API request limit, or 0 if no such response has been seen yet
+   */
+  public int getDailyApiLimit();
 
-    /**
-     * Get the current Daily API limit.  This value is returned in a header from Salesforce.  The value is persisted here after each API call.
-     * @return
-     */
-    public int getDailyApiLimit();
-
-
-    /**
-     * Get the current Daily API usage.  This value is returned in a header from Salesforce.  The value is persisted here after each API call.
-     * @return
-     */
-    public int getDailyApiUsed();
-
+  /**
+   * Gets the current Daily API usage. This value is read from the {@code Sforce-Limit-Info} header
+   * of the most recent response that carried an {@code api-usage} entry, so it is not updated by
+   * responses without one.
+   *
+   * @return the number of daily API requests used, or 0 if no such response has been seen yet
+   */
+  public int getDailyApiUsed();
 }

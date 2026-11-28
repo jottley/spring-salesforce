@@ -1,0 +1,18 @@
+{
+    "searchRecords":[
+        {
+            "attributes":{
+                "type":"Account",
+                "url":"/services/data/v68.0/sobjects/Account/001A000000df63xIAA"
+            },
+            "Id":"001A000000df63xIAA"
+        },
+        {
+            "attributes":{
+                "type":"Contact",
+                "url":"/services/data/v68.0/sobjects/Contact/003A000000vF6QSIA0"
+            },
+            "Id":"003A000000vF6QSIA0"
+        }
+    ]
+}

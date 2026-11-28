@@ -1,5 +1,5 @@
 # Spring Salesforce
-Spring Salesforce is a Spring extension that provides connection support and API binding for Salesforces
+Spring Salesforce is a Spring extension that provides connection support and API binding for the Salesforce
 REST API.
 
 ## Usage
@@ -16,16 +16,26 @@ For flows where a user signs in to Salesforce, create a Connected App (or Extern
 SalesforceServiceProvider provider = new SalesforceServiceProvider(clientId, clientSecret); // or (clientId, clientSecret, true) for a sandbox
 SalesforceOAuth2Client oauth = provider.getOAuth2Client();
 
-// 1. Send the user here (state should be a random value you verify on return)
-String authorizeUrl = oauth.buildAuthorizeUrl("https://myapp.example.com/callback", "api refresh_token", state);
+// 1. Send the user here (state should be a random value you verify on return).
+//    Keep the PKCE verifier (for example in the user's session) until the callback.
+String verifier = Pkce.generateCodeVerifier();
+String authorizeUrl = oauth.buildAuthorizeUrl("https://myapp.example.com/callback", "api refresh_token", state,
+        Pkce.codeChallenge(verifier));
 
-// 2. In your callback handler, exchange the code Salesforce sends back
-AccessGrant grant = oauth.exchangeForAccess(code, "https://myapp.example.com/callback");
+// 2. In your callback handler, exchange the code Salesforce sends back, with the same verifier
+AccessGrant grant = oauth.exchangeForAccess(code, "https://myapp.example.com/callback", verifier);
 Salesforce salesforce = provider.getApi(grant.getAccessToken());
 
 // 3. When the access token expires (requires the refresh_token scope)
 AccessGrant refreshed = oauth.refreshAccess(grant.getRefreshToken());
+
+// 4. On logout, revoke the refresh token (this also revokes the access tokens issued from it)
+oauth.revokeToken(grant.getRefreshToken());
 ```
+
+External Client Apps can require PKCE (it is the default for new apps), and Salesforce recommends it for every app, so pass the code challenge and the verifier as shown. If you send a challenge you must send the verifier, and the reverse. The older `buildAuthorizeUrl(redirectUri, scope, state)` and `exchangeForAccess(code, redirectUri)` still work for apps that do not require PKCE. If your app is a public client, create the client with a `null` secret and none is sent with the authorization-code and refresh requests; whether Salesforce accepts that depends on the app's settings. The library does not store the verifier; keep it between the redirect and the callback, as you do for `state`.
+
+`revokeToken` accepts an access token or a refresh token and throws `HttpClientErrorException` (a 400) if Salesforce refuses it. Revoking a token that is already revoked gave `error=unsupported_token_type` in a form-encoded body (not JSON) when checked against a live org. Code that does not care, such as a logout, can catch the exception and ignore it. The revoke URL is the token URL with `/token` replaced by `/revoke`.
 
 The redirect URI must match the one configured on the app. The `refresh_token` scope must be granted to receive a refresh token.
 
@@ -68,6 +78,9 @@ To include in your Maven project, use the following repository and dependency
     </dependencies>
 ```
 
+## API versions
+Requests use API version `v68.0` by default (`ApiOperations.DEFAULT_API_VERSION`). Call `salesforce.apiOperations().setVersion("v40.0")` to use another. Versions below `v31.0` are rejected with an `InvalidSalesforceApiVersionException`, and so is anything that is not of the form `v` plus a number, a dot and one digit.
+
 ## Supported Operations
  - Retrieve all available API versions
  - Retrieve services supported by a specific version of the API
@@ -83,13 +96,39 @@ To include in your Maven project, use the following repository and dependency
  - Run a SOQL query and retrieve the results (with paging or all)
    - query results can optionally include deleted records
  - Retrieve user profile
- - Retrieve user status
- - Update user status
  - List the limits of an org
  - Check the current API limit and usage
  - Get a list of Communities (Digital Experience)
  - Get a list of Community (Digital Experience) users
 
+The Chatter user status operations (`getStatus`, `updateStatus`) are deprecated: Salesforce retired that resource in API 25, so they always fail.
+
+## Checking against a real org
+`src/test/java/org/springframework/salesforce/live/LiveSalesforceCheck.java` is a manual check that exercises the library against a Salesforce org. It is not part of `mvn test` and skips itself without credentials. It reads by default; writes need `SF_ENABLE_WRITES=true` and only run against a sandbox, scratch org or Developer Edition org.
+
+```bash
+export SF_MY_DOMAIN_URL=https://yourdomain.my.salesforce.com
+export SF_CLIENT_ID=...
+export SF_CLIENT_SECRET=...
+mvn -Dtest=LiveSalesforceCheck -Djacoco.skip=true -DfailIfNoSpecifiedTests=false test
+```
+
+See the class comment for the optional variables (`SF_API_VERSION`, `SF_ENABLE_WRITES`, `SF_APEX_PATH`, `SF_PAGING_OBJECT`, `SF_ALLOW_WRITES_IN_PRODUCTION`).
+
+## Releasing
+
+Releases go to the Repsy repository (the `repsy` entry in `distributionManagement`). The version is managed by `maven-release-plugin`: it drops `-SNAPSHOT` (`3.0.0-SNAPSHOT` is released as `3.0.0`), tags the commit `v3.0.0`, moves the pom to the next development version (`3.0.1-SNAPSHOT`) and deploys the tagged build.
+
+**From GitHub:** run the *Maven Release* workflow from the Actions tab, on `master`. It needs the repository secrets `REPSY_USERNAME` and `REPSY_PASSWORD`. The *Dry run* box is ticked by default and only checks that the release could be prepared; untick it to release. The release and next-development versions are optional inputs.
+
+**From your machine:**
+
+```
+mvn release:prepare -DdryRun=true     # check only; undo with: mvn release:clean
+mvn release:prepare release:perform
+```
+
+The working tree must be clean. `release:prepare` runs the full build first (tests, coverage, Javadoc and license checks), then pushes the release commit, the tag and the next-version commit over the SSH URL in the pom's `scm` section. Add `-DreleaseVersion=3.1.0` or `-DdevelopmentVersion=3.2.0-SNAPSHOT` to override the defaults. If a release fails part way, run `mvn release:rollback`; a tag that was already pushed has to be deleted by hand. The release commits land on the branch you release from, so merge it back into `develop` afterwards.
 
 ## Historical Notes
 The project maintains part of the package naming for historical reasons. It should be thought of as deprecated and will eventually be removed. It is not associated with Spring beyond that; it leverages libraries from Spring and is intended to be used by projects that use the Spring framework.

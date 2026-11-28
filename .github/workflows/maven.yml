@@ -10,9 +10,14 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "develop" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "develop" ]
+
+# A newer push to the same branch or PR cancels the run it supersedes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -27,8 +32,34 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
+    - name: Check code format (Spotless, Google Java Format)
+      run: mvn -B spotless:check --file pom.xml
+
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+
+    - name: Add coverage summary
+      if: always()
+      run: |
+        if [ -f target/site/jacoco/jacoco.csv ]; then
+          awk -F, 'NR>1 {m+=$4; c+=$5; bm+=$6; bc+=$7} END {printf "### Code coverage\n\n- Instructions: %.1f%%\n- Branches: %.1f%%\n", 100*c/(m+c), 100*bc/(bm+bc)}' target/site/jacoco/jacoco.csv >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: surefire-reports
+        path: target/surefire-reports/
+        if-no-files-found: ignore
+
+    - name: Upload JaCoCo report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: jacoco-report
+        path: target/site/jacoco/
+        if-no-files-found: ignore
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Update dependency graph
