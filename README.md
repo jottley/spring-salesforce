@@ -115,5 +115,20 @@ mvn -Dtest=LiveSalesforceCheck -Djacoco.skip=true -DfailIfNoSpecifiedTests=false
 
 See the class comment for the optional variables (`SF_API_VERSION`, `SF_ENABLE_WRITES`, `SF_APEX_PATH`, `SF_PAGING_OBJECT`, `SF_ALLOW_WRITES_IN_PRODUCTION`).
 
+## Releasing
+
+Releases go to the Repsy repository (the `repsy` entry in `distributionManagement`). The version is managed by `maven-release-plugin`: it drops `-SNAPSHOT` (`3.0.0-SNAPSHOT` is released as `3.0.0`), tags the commit `v3.0.0`, moves the pom to the next development version (`3.0.1-SNAPSHOT`) and deploys the tagged build.
+
+**From GitHub:** run the *Maven Release* workflow from the Actions tab, on `master`. It needs the repository secrets `REPSY_USERNAME` and `REPSY_PASSWORD`. The *Dry run* box is ticked by default and only checks that the release could be prepared; untick it to release. The release and next-development versions are optional inputs.
+
+**From your machine:**
+
+```
+mvn release:prepare -DdryRun=true     # check only; undo with: mvn release:clean
+mvn release:prepare release:perform
+```
+
+The working tree must be clean. `release:prepare` runs the full build first (tests, coverage, Javadoc and license checks), then pushes the release commit, the tag and the next-version commit over the SSH URL in the pom's `scm` section. Add `-DreleaseVersion=3.1.0` or `-DdevelopmentVersion=3.2.0-SNAPSHOT` to override the defaults. If a release fails part way, run `mvn release:rollback`; a tag that was already pushed has to be deleted by hand. The release commits land on the branch you release from, so merge it back into `develop` afterwards.
+
 ## Historical Notes
 The project maintains part of the package naming for historical reasons. It should be thought of as deprecated and will eventually be removed. It is not associated with Spring beyond that; it leverages libraries from Spring and is intended to be used by projects that use the Spring framework.

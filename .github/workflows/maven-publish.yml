@@ -1,34 +1,93 @@
-# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
-# For more information, see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
+# Releases the library to the Repsy Maven repository.
+#
+# Run it by hand from the Actions tab, on master: "Run workflow". It uses maven-release-plugin
+# (configured in pom.xml) to
+#   1. drop -SNAPSHOT from the version (3.0.0-SNAPSHOT becomes 3.0.0), commit and tag it (v3.0.0),
+#   2. set the next development version (3.0.1-SNAPSHOT) and commit that,
+#   3. check out the tag and deploy it to the repository in <distributionManagement> (id: repsy).
+#
+# Needs two repository secrets: REPSY_USERNAME and REPSY_PASSWORD.
+# "dry run" is on by default: it only checks that the release could be prepared and changes nothing.
+#
+# If master is a protected branch that requires pull requests, the release commits cannot be pushed with
+# the default GITHUB_TOKEN; use a token or a ruleset bypass that allows it.
 
-name: Maven Package
+name: Maven Release
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (check only; no commits, tags or deploy)'
+        type: boolean
+        default: true
+      release_version:
+        description: 'Release version (blank = the current version without -SNAPSHOT)'
+        type: string
+        required: false
+      development_version:
+        description: 'Next development version (blank = increment the last number, then add -SNAPSHOT)'
+        type: string
+        required: false
+
+# Never run two releases at once
+concurrency:
+  group: maven-release
+  cancel-in-progress: false
 
 jobs:
-  build:
-
+  release:
+    # Releases are made from master only
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      contents: write   # push the release commits and the tag
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # the release plugin needs the history and tags
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+        cache: maven
+        server-id: repsy                       # must match <distributionManagement><repository><id> in the pom
+        server-username: REPSY_USERNAME        # names of the environment variables read by settings.xml
+        server-password: REPSY_PASSWORD
 
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-
-    - name: Publish to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+    - name: Configure git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        # The pom's <scm> uses an SSH URL (for local releases). On the runner, use the workflow token over
+        # HTTPS instead; the rewrite covers the clone that release:perform makes as well as the pushes.
+        git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:"
       env:
         GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Prepare the release (dry run)
+      if: ${{ inputs.dry_run }}
+      run: |
+        args=()
+        [ -n "${RELEASE_VERSION}" ] && args+=("-DreleaseVersion=${RELEASE_VERSION}")
+        [ -n "${DEVELOPMENT_VERSION}" ] && args+=("-DdevelopmentVersion=${DEVELOPMENT_VERSION}")
+        mvn -B release:prepare -DdryRun=true "${args[@]}"
+      env:
+        RELEASE_VERSION: ${{ inputs.release_version }}
+        DEVELOPMENT_VERSION: ${{ inputs.development_version }}
+
+    - name: Prepare and perform the release
+      if: ${{ !inputs.dry_run }}
+      run: |
+        args=()
+        [ -n "${RELEASE_VERSION}" ] && args+=("-DreleaseVersion=${RELEASE_VERSION}")
+        [ -n "${DEVELOPMENT_VERSION}" ] && args+=("-DdevelopmentVersion=${DEVELOPMENT_VERSION}")
+        mvn -B release:prepare release:perform "${args[@]}"
+      env:
+        RELEASE_VERSION: ${{ inputs.release_version }}
+        DEVELOPMENT_VERSION: ${{ inputs.development_version }}
+        REPSY_USERNAME: ${{ secrets.REPSY_USERNAME }}
+        REPSY_PASSWORD: ${{ secrets.REPSY_PASSWORD }}
