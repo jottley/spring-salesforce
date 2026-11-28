@@ -3,7 +3,7 @@
 
 	<groupId>org.springframework</groupId>
 	<artifactId>spring-salesforce</artifactId>
-	<version>3.0.0</version>
+	<version>3.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>spring-salesforce</name>
@@ -321,7 +321,7 @@
 		<url>https://github.com/jottley/spring-salesforce</url>
 		<connection>scm:git:git@github.com:jottley/spring-salesforce.git</connection>
 		<developerConnection>scm:git:git@github.com:jottley/spring-salesforce.git</developerConnection>
-	  <tag>v3.0.0</tag>
+	  <tag>HEAD</tag>
   </scm>
 	<issueManagement>
 		<system>GitHub</system>
