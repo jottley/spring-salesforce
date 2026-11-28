@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2017-2026 https://github.com/jottley/spring-social-salesforce
+ * Copyright (C) 2017-2026 https://github.com/jottley/spring-salesforce
  *
  * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at

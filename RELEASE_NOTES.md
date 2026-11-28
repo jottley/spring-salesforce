@@ -1,6 +1,20 @@
 # Release notes
 
-**Version:** 3.0.0
+## Version 3.0.1 (in development)
+
+**New: Salesforce Canvas support.** Verify the signed request Salesforce posts to a Canvas app and read what it carries. Nothing changes for existing code.
+
+- `SalesforceCanvasServiceProvider(signedRequest, consumerSecret)` verifies the signature and exposes `getCanvasRequest()` (the typed request), `getCanvasRequestJson()` (the envelope as JSON, tokens included) and `getApi()` (a `Salesforce` that uses the request's token and instance URL). `SalesforceCanvasConnectionFactory` is the one-line form for when only the API is needed.
+- The signature is checked first, always as HMAC-SHA256, with a constant-time comparison. Malformed, tampered or wrongly signed input, and an envelope that names another algorithm, throw `SecurityException`; a null or blank secret throws `IllegalArgumentException`. Requests are not rejected for age.
+- The request model is a set of records in `org.springframework.salesforce.canvas`: `CanvasRequest`, `CanvasClient`, `CanvasContext` with its user, organization, link, environment and application contexts, and `CanvasRecordContext`, which holds every field of the record the component is on in `fields()`. Unknown properties are ignored. Checked against requests from a live org, from both Lightning and Visualforce.
+- `CanvasClient.toString()` masks the OAuth and refresh tokens, and exception messages never quote the request, so a logged request does not write credentials to the log.
+- New constructor `SalesforceTemplate(String accessToken, String instanceUrl)`.
+- Source files that were adapted from the Salesforce Canvas SDK keep its BSD 3-clause header; the Apache RAT check knows about it.
+- Every license header now points at `https://github.com/jottley/spring-salesforce`.
+
+---
+
+## Version 3.0.0
 
 ## Upgrade notes: please read first
 

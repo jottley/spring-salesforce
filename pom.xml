@@ -264,6 +264,23 @@
 					</execution>
 				</executions>
 				<configuration>
+					<!-- The canvas classes derived from Salesforce's Canvas Framework SDK keep its BSD 3-clause header
+					     (BSD 3-clause allows redistribution when the notice is retained). New files use the Apache header. -->
+					<licenses>
+						<license implementation="org.apache.rat.analysis.license.SimplePatternBasedLicense">
+							<licenseFamilyCategory>SFBSD</licenseFamilyCategory>
+							<licenseFamilyName>Salesforce Canvas SDK BSD 3-Clause</licenseFamilyName>
+							<notes>Header of files derived from the Salesforce Canvas Framework SDK</notes>
+							<patterns>
+								<pattern>Copyright (c) 2011, salesforce.com, inc.</pattern>
+							</patterns>
+						</license>
+					</licenses>
+					<licenseFamilies>
+						<licenseFamily implementation="org.apache.rat.license.SimpleLicenseFamily">
+							<familyName>Salesforce Canvas SDK BSD 3-Clause</familyName>
+						</licenseFamily>
+					</licenseFamilies>
 					<includes>
 						<include>**/*.java</include>
 					</includes>

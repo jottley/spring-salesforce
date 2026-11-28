@@ -1,0 +1,86 @@
+{
+  "algorithm": "HMACSHA256",
+  "issuedAt": 1700000000,
+  "userId": "005x00000012Q9PAAU",
+  "client": {
+    "refreshToken": null,
+    "instanceId": "07Hx0000000abcdEAA",
+    "targetOrigin": "https://na1.salesforce.com",
+    "instanceUrl": "https://na1.salesforce.com",
+    "oauthToken": "00Dx0000000abcd!CANVAS_TOKEN"
+  },
+  "context": {
+    "user": {
+      "userId": "005x00000012Q9PAAU",
+      "userName": "admin@example.com",
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "email": "admin@example.com",
+      "fullName": "Jane Doe",
+      "locale": "en_US",
+      "language": "fr_CA",
+      "timeZone": "America/Los_Angeles",
+      "profileId": "00ex0000000abcdAAA",
+      "roleId": null,
+      "userType": "STANDARD",
+      "currencyISOCode": "USD",
+      "accessibilityModeEnabled": true,
+      "profilePhotoUrl": "https://na1.salesforce.com/profilephoto/photo",
+      "profileThumbnailUrl": "https://na1.salesforce.com/profilephoto/thumb"
+    },
+    "links": {
+      "enterpriseUrl": "/services/Soap/c/68.0/00Dx0000000abcd",
+      "metadataUrl": "/services/Soap/m/68.0/00Dx0000000abcd",
+      "partnerUrl": "/services/Soap/u/68.0/00Dx0000000abcd",
+      "restUrl": "/services/data/v68.0/",
+      "sobjectUrl": "/services/data/v68.0/sobjects/",
+      "searchUrl": "/services/data/v68.0/search/",
+      "queryUrl": "/services/data/v68.0/query/",
+      "recentItemsUrl": "/services/data/v68.0/recent/",
+      "userUrl": "/005x00000012Q9PAAU",
+      "chatterFeedsUrl": "/services/data/v68.0/chatter/feeds",
+      "chatterGroupsUrl": "/services/data/v68.0/chatter/groups",
+      "chatterUsersUrl": "/services/data/v68.0/chatter/users",
+      "chatterFeedItemsUrl": "/services/data/v68.0/chatter/feed-items",
+      "loginUrl": "https://login.salesforce.com"
+    },
+    "application": {
+      "namespace": "",
+      "name": "My Canvas App",
+      "canvasUrl": "https://myapp.example.com/canvas",
+      "applicationId": "06Px0000000abcdEAA",
+      "version": "1.0",
+      "authType": "SIGNED_REQUEST",
+      "referenceId": "09Hx0000000abcdEAA",
+      "options": ["HideShare", "HideHeader"],
+      "samlInitiationMethod": "None",
+      "developerName": "My_Canvas_App"
+    },
+    "organization": {
+      "organizationId": "00Dx0000000abcdEAA",
+      "name": "Acme Corp",
+      "multicurrencyEnabled": true,
+      "currencyIsoCode": "EUR"
+    },
+    "environment": {
+      "locationUrl": "https://na1.salesforce.com/home/home.jsp",
+      "displayLocation": "Chatter",
+      "uiTheme": "Theme3",
+      "dimensions": {
+        "width": "800px",
+        "height": "900px",
+        "maxWidth": "1000px",
+        "maxHeight": "2000px",
+        "clientWidth": "1000px",
+        "clientHeight": "1000px"
+      },
+      "parameters": {
+        "customParam": "value1"
+      },
+      "version": {
+        "season": "WINTER",
+        "api": "v68.0"
+      }
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "algorithm": "HMACSHA256",
+  "issuedAt": 595006702,
+  "userId": "005x00000012Q9PAAU",
+  "client": {
+    "refreshToken": "[redacted]",
+    "instanceId": "_:Spring_Salesforce_Quickstart:j_id0:AlfCanvas3:canvasapp",
+    "targetOrigin": "https://example-dev-ed.my.salesforce.com",
+    "instanceUrl": "https://example-dev-ed.my.salesforce.com",
+    "oauthToken": "[redacted]"
+  },
+  "context": {
+    "user": {
+      "userId": "005x00000012Q9PAAU",
+      "userName": "admin@example.com.canvasdemo",
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "email": "jane@example.com",
+      "fullName": "Jane Doe",
+      "locale": "en_US",
+      "language": "en_US",
+      "timeZone": "America/Los_Angeles",
+      "profileId": "00ex0000000abcdAAA",
+      "roleId": "00Ex0000000abcdEAA",
+      "userType": "STANDARD",
+      "currencyISOCode": "USD",
+      "profilePhotoUrl": "https://example-dev-ed.file.force.com/profilephoto/005/F",
+      "profileThumbnailUrl": "https://example-dev-ed.file.force.com/profilephoto/005/T",
+      "siteUrl": null,
+      "siteUrlPrefix": null,
+      "networkId": null,
+      "accessibilityModeEnabled": false,
+      "isDefaultNetwork": true
+    },
+    "links": {
+      "loginUrl": "https://example-dev-ed.my.salesforce.com",
+      "enterpriseUrl": "/services/Soap/c/68.0/00Dx0000000abcd",
+      "metadataUrl": "/services/Soap/m/68.0/00Dx0000000abcd",
+      "partnerUrl": "/services/Soap/u/68.0/00Dx0000000abcd",
+      "restUrl": "/services/data/v68.0/",
+      "sobjectUrl": "/services/data/v68.0/sobjects/",
+      "searchUrl": "/services/data/v68.0/search/",
+      "queryUrl": "/services/data/v68.0/query/",
+      "recentItemsUrl": "/services/data/v68.0/recent/",
+      "chatterFeedsUrl": "/services/data/v31.0/chatter/feeds",
+      "chatterGroupsUrl": "/services/data/v68.0/chatter/groups",
+      "chatterUsersUrl": "/services/data/v68.0/chatter/users",
+      "chatterFeedItemsUrl": "/services/data/v31.0/chatter/feed-items",
+      "userUrl": "/005x00000012Q9PAAU"
+    },
+    "application": {
+      "name": "Spring Salesforce Quickstart",
+      "canvasUrl": "http://localhost:8080/canvas",
+      "applicationId": "0xIx0000000abcd",
+      "version": null,
+      "authType": "SIGNED_REQUEST",
+      "referenceId": "0xIx0000000abcd",
+      "options": [],
+      "samlInitiationMethod": "None",
+      "isInstalledPersonalApp": false,
+      "namespace": "",
+      "developerName": "Spring_Salesforce_Quickstart"
+    },
+    "organization": {
+      "organizationId": "00Dx0000000abcdEAA",
+      "name": "Example Org",
+      "multicurrencyEnabled": false,
+      "namespacePrefix": null,
+      "currencyIsoCode": "USD"
+    },
+    "environment": {
+      "referer": null,
+      "locationUrl": "https://example-dev-ed--c.vf.force.com/apex/AccountQS?ltn_app_id=06mx0000000abcd&sfdcIFrameHost=web&id=001x0000000abcdAAA&isdtp=p1&clc=0",
+      "displayLocation": "Visualforce",
+      "sublocation": null,
+      "uiTheme": "Theme3",
+      "dimensions": {
+        "width": "100%",
+        "height": "450px",
+        "maxWidth": "1000px",
+        "maxHeight": "2000px",
+        "clientWidth": "946px",
+        "clientHeight": "30px"
+      },
+      "parameters": {},
+      "record": {
+        "attributes": {
+          "type": "Account",
+          "url": "/services/data/v68.0/sobjects/Account/001x0000000abcdAAA"
+        },
+        "Id": "001x0000000abcdAAA",
+        "IsDeleted": false,
+        "MasterRecordId": null,
+        "Name": "Example Account",
+        "Type": "Prospect",
+        "BillingState": "VA",
+        "BillingCountry": "USA",
+        "BillingLatitude": null,
+        "BillingAddress": {
+          "city": null,
+          "country": "USA",
+          "geocodeAccuracy": null,
+          "latitude": null,
+          "longitude": null,
+          "postalCode": null,
+          "state": "VA",
+          "street": null
+        },
+        "ShippingAddress": null,
+        "Phone": "(555) 010-0100",
+        "PhotoUrl": "/services/images/photo/001x0000000abcdAAA",
+        "OwnerId": "005x00000012Q9PAAU",
+        "CreatedDate": "2021-08-15T00:37:25.000+0000",
+        "IsPartner": false,
+        "IsCustomerPortal": true,
+        "CleanStatus": "Pending",
+        "AccountSource": "Partner Referral",
+        "CustomerPriority__c": null,
+        "Region__c": null
+      },
+      "version": {
+        "season": "WINTER",
+        "api": "68.0"
+      }
+    }
+  }
+}

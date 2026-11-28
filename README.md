@@ -100,8 +100,41 @@ Requests use API version `v68.0` by default (`ApiOperations.DEFAULT_API_VERSION`
  - Check the current API limit and usage
  - Get a list of Communities (Digital Experience)
  - Get a list of Community (Digital Experience) users
+ - Verify a Canvas signed request and use the token it carries (see **Canvas apps** below)
 
 The Chatter user status operations (`getStatus`, `updateStatus`) are deprecated: Salesforce retired that resource in API 25, so they always fail.
+
+## Canvas apps
+A Salesforce Canvas app is your web app shown inside Salesforce (a Lightning page, a Visualforce page and so on). When the component loads, Salesforce POSTs a form field named `signed_request` to the app's Canvas URL. It is `signature.envelope`: a Base64 JSON envelope with the user, organization, links, application, environment and an OAuth token, and an HMAC-SHA256 of the envelope made with the Connected App's consumer secret. The signature is the authentication; there is no login.
+
+```java
+@PostMapping(path = "/canvas", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+public String canvas(@RequestParam("signed_request") String signedRequest) {
+    try {
+        SalesforceCanvasServiceProvider provider =
+                new SalesforceCanvasServiceProvider(signedRequest, consumerSecret);
+
+        CanvasRequest request = provider.getCanvasRequest();
+        String who = request.canvasContext().userContext().fullName();
+
+        // acts as the user who opened the component, with the request's token
+        Salesforce salesforce = provider.getApi();
+        ...
+    } catch (SecurityException e) {
+        // not signed with this secret, tampered with, or malformed: answer 403
+    }
+}
+```
+
+If you only need the API, `new SalesforceCanvasConnectionFactory(signedRequest, consumerSecret).createApi()` does the same in one line.
+
+- **Verified first.** The constructor checks the signature before it reads anything in the envelope, always as HMAC-SHA256, and throws `SecurityException` (a null or blank secret throws `IllegalArgumentException`). A request is not rejected for being old: `issuedAt` is available if you want a limit.
+- **The record depends on where the component is.** On Visualforce Salesforce sends the record in `environment.record`; `CanvasRecordContext.fields()` holds every field, nulls and custom fields included. On a Lightning record page the record is empty and only the id arrives in `environment.parameters` (`recordId`, and `type` if your wrapper passes it), so read it with `getApi()`.
+- **Tokens are credentials.** `CanvasClient.toString()` masks the OAuth and refresh tokens, and exception messages never quote the request, but `getCanvasRequestJson()` returns the whole envelope: redact it before logging.
+- **Spring Security.** Salesforce sends no CSRF token and shows the page in an iframe, so turn CSRF off for the Canvas URL only, and replace `X-Frame-Options: DENY` on that path with a `frame-ancestors` policy naming Salesforce's domains (`https://*.salesforce.com`, `https://*.force.com`, `https://*.visualforce.com`, `https://*.salesforce-setup.com`).
+- **Unknown properties are fine.** The records ignore what they do not declare, so new properties from Salesforce do not break reading.
+
+The [quickstart](https://github.com/jottley/spring-salesforce-quickstart) has a working Canvas page, with the Connected App, Lightning and Visualforce setup. It needs 3.0.1 or later.
 
 ## Checking against a real org
 `src/test/java/org/springframework/salesforce/live/LiveSalesforceCheck.java` is a manual check that exercises the library against a Salesforce org. It is not part of `mvn test` and skips itself without credentials. It reads by default; writes need `SF_ENABLE_WRITES=true` and only run against a sandbox, scratch org or Developer Edition org.
@@ -129,6 +162,9 @@ mvn release:prepare release:perform
 ```
 
 The working tree must be clean. `release:prepare` runs the full build first (tests, coverage, Javadoc and license checks), then pushes the release commit, the tag and the next-version commit over the SSH URL in the pom's `scm` section. Add `-DreleaseVersion=3.1.0` or `-DdevelopmentVersion=3.2.0-SNAPSHOT` to override the defaults. If a release fails part way, run `mvn release:rollback`; a tag that was already pushed has to be deleted by hand. The release commits land on the branch you release from, so merge it back into `develop` afterwards.
+
+## License
+Apache License 2.0 (see `LICENSE`). The Canvas signed request classes in `org.springframework.salesforce.canvas` are adapted from the Salesforce Canvas Framework SDK and keep its BSD 3-clause license; see `THIRD-PARTY-LICENSES`.
 
 ## Historical Notes
 The project maintains part of the package naming for historical reasons. It should be thought of as deprecated and will eventually be removed. It is not associated with Spring beyond that; it leverages libraries from Spring and is intended to be used by projects that use the Spring framework.
