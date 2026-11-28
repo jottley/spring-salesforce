@@ -1,0 +1,164 @@
+THIRD-PARTY LICENSES
+====================
+
+Spring Salesforce is licensed under the Apache License, Version 2.0 (see
+LICENSE). It contains code adapted from the third-party project below, which is
+licensed under the terms given for it. The Apache license does not apply to
+those files: each carries the third-party copyright and license notice in its
+own header.
+
+--------------------------------------------------------------------------------
+Salesforce Canvas Framework SDK
+--------------------------------------------------------------------------------
+Source:    https://github.com/forcedotcom/SalesforceCanvasFrameworkSDK
+Based on:  src/main/java/canvas on master (a9ee59b); the canvas sources last
+           changed in commit 1a55400 (2016-11-19)
+Copyright: (c) 2011, salesforce.com, inc.
+License:   BSD 3-Clause
+
+The following files are adapted from that SDK (the signed request verification
+and the canvas request model, rewritten as Java 17 records, with additions).
+Each keeps the notice below in its header:
+
+  - src/main/java/org/springframework/salesforce/canvas/CanvasClient.java
+  - src/main/java/org/springframework/salesforce/canvas/CanvasContext.java
+  - src/main/java/org/springframework/salesforce/canvas/CanvasEnvironmentContext.java
+  - src/main/java/org/springframework/salesforce/canvas/CanvasLinkContext.java
+  - src/main/java/org/springframework/salesforce/canvas/CanvasOrganizationContext.java
+  - src/main/java/org/springframework/salesforce/canvas/CanvasRequest.java
+  - src/main/java/org/springframework/salesforce/canvas/CanvasUserContext.java
+  - src/main/java/org/springframework/salesforce/canvas/SignedRequest.java
+
+Redistribution and use of these files, in source and binary forms, with or
+without modification, remain subject to the following terms.
+
+Copyright (c) 2011, salesforce.com, inc. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list
+of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, this
+list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+Neither the name of salesforce.com, inc. nor the names of its contributors may
+be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+--------------------------------------------------------------------------------
+Changes made to the Salesforce Canvas Framework SDK files
+--------------------------------------------------------------------------------
+The files above are modified versions of the SDK's src/main/java/canvas classes.
+The upstream repository's LICENSE.txt gives the year as 2012; the source file
+headers, which are kept as they are, say 2011.
+
+All files
+  - Moved from package "canvas" to "org.springframework.salesforce.canvas".
+  - Changed the model classes (JavaBeans with getters and setters) into Java 17
+    records: immutable, with accessors named after the components, such as
+    userContext(), instead of getUserContext(). The setters are gone.
+  - Removed unused imports and a stray extra semicolon.
+  - Added Javadoc to every class, record and member, including private ones,
+    which the build requires.
+  - Wire names that differ from the component name use @JsonProperty on the
+    record component instead of on a getter and a setter.
+
+SignedRequest
+  - Verifies the signature before the envelope is parsed. The SDK parsed the
+    JSON first and used the "algorithm" it named to choose the HMAC algorithm.
+  - The algorithm is fixed to HmacSHA256. An envelope that names another
+    algorithm is rejected with a SecurityException; a missing algorithm and any
+    letter case of HMACSHA256 are accepted.
+  - Compares signatures with MessageDigest.isEqual (constant time) instead of
+    Arrays.equals.
+  - Decodes with java.util.Base64.getDecoder() (standard alphabet, strict)
+    instead of Apache Commons Codec's "new Base64(true)". Malformed Base64 is a
+    SecurityException ("... is not valid Base64") instead of being decoded
+    leniently.
+  - Uses explicit charsets: UTF-8 for the secret and the envelope text, US-ASCII
+    for the signed text. The SDK used the platform default.
+  - A null or blank secret throws IllegalArgumentException before anything else
+    is read (as before, but checked first).
+  - A missing or leading-dot separator is rejected. The error message no longer
+    quotes the input, and the SDK's "Problem with key [<key>]" message, which put
+    the key object in the text, is gone: the input carries the OAuth token, only
+    Base64 encoded, so it must not reach a log.
+  - Parse failures report Jackson's original message without the source text
+    (the SDK used the full message).
+  - Shares one static ObjectMapper and TypeReference instead of building them on
+    each call. The class is final and has a private constructor.
+  - verifyAndDecodeAsJson returns the envelope re-serialized from a Map. Its
+    parse error names the right type (the SDK reported the TypeReference's own
+    class).
+  - No longer uses Apache Commons Codec, so the library does not depend on it.
+
+CanvasRequest
+  - issuedAt is a Long. The SDK used Integer, which cannot hold every value
+    Salesforce sends.
+  - The context component is named canvasContext (wire name "context"),
+    accessed as canvasContext() instead of getContext().
+
+CanvasClient
+  - Added refreshToken.
+  - The OAuth token component is oauthToken (SDK field OAuthToken), accessed as
+    oauthToken() instead of getOAuthToken().
+  - toString() masks oauthToken and refreshToken as [redacted] so a logged
+    request does not write credentials to the log.
+
+CanvasContext
+  - Added the "application" section as applicationContext
+    (CanvasApplicationContext, a new class that is not from the SDK).
+  - toString() includes the Application Context section.
+  - Accessors are named after the components (orgContext() for the SDK's
+    getOrganizationContext(), envContext() for getEnvironmentContext(),
+    linkContext() for getLinkContext()).
+  - The environment is no longer replaced by an empty CanvasEnvironmentContext
+    when absent: envContext() returns null.
+
+CanvasEnvironmentContext
+  - Added displayLocation, sublocation, referer and the "record" section as
+    recordContext (CanvasRecordContext, a new class that is not from the SDK).
+    The Dimensions record gained clientHeight, clientWidth,
+    maxHeight and maxWidth. SystemVersion is now the record Version, with api()
+    instead of getApiVersion().
+  - Null parameters become an empty map, and the map is copied into an
+    unmodifiable one. Null values are allowed.
+  - Dimensions, Version and the record are nested records, so the SDK's
+    "needs default ctor for Jackson" constructor is gone.
+  - toString() is the generated record form. The SDK's toString() would throw a
+    NullPointerException when dimensions or version was absent.
+
+CanvasLinkContext
+  - Added loginUrl.
+  - The userUrl wire property is the component userProfileUrl, accessed as
+    userProfileUrl() (the SDK's getter was getUserUrl()).
+
+CanvasOrganizationContext
+  - Added namespacePrefix.
+  - The currency component is currencyIsoCode (wire name "currencyIsoCode"),
+    accessed as currencyIsoCode() instead of getCurrencyISOCode(), because the
+    SDK's property spelling did not match its own wire name.
+
+CanvasUserContext
+  - Added siteUrl, siteUrlPrefix, networkId and isDefaultNetwork (boolean).
+  - The accessibility component is accessibilityModeEnabled (the wire name),
+    accessed as accessibilityModeEnabled() instead of isAccessibilityMode().
+  - toString() is the generated record form.
+
+The new fields and wire names in this list were checked against requests from a
+live Salesforce org (Lightning and Visualforce). The SDK has no tests; the
+classes are covered by tests written for this project.

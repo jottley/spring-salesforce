@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2019-2026 https://github.com/jottley/spring-social-salesforce
+ * Copyright (C) 2019-2026 https://github.com/jottley/spring-salesforce
  *
  * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -125,6 +125,19 @@ public class SalesforceTemplate implements Salesforce {
    */
   public SalesforceTemplate(String accessToken) {
     this.accessToken = accessToken;
+    initializeRestTemplate();
+    initialize();
+  }
+
+  /**
+   * Creates a template that sends the access token as a bearer token on every request.
+   *
+   * @param accessToken the OAuth2 access token
+   * @param instanceUrl the instance URL
+   */
+  public SalesforceTemplate(String accessToken, String instanceUrl) {
+    this.accessToken = accessToken;
+    this.instanceUrl = instanceUrl;
     initializeRestTemplate();
     initialize();
   }

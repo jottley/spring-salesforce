@@ -1,0 +1,96 @@
+{
+  "algorithm": "HMACSHA256",
+  "issuedAt": 595006185,
+  "userId": "005x00000012Q9PAAU",
+  "client": {
+    "refreshToken": "[redacted]",
+    "instanceId": "_:Spring_Salesforce_Quickstart:464:0:canvasapp",
+    "targetOrigin": "https://example-dev-ed.my.salesforce.com",
+    "instanceUrl": "https://example-dev-ed.my.salesforce.com",
+    "oauthToken": "[redacted]"
+  },
+  "context": {
+    "user": {
+      "userId": "005x00000012Q9PAAU",
+      "userName": "admin@example.com.canvasdemo",
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "email": "jane@example.com",
+      "fullName": "Jane Doe",
+      "locale": "en_US",
+      "language": "en_US",
+      "timeZone": "America/Los_Angeles",
+      "profileId": "00ex0000000abcdAAA",
+      "roleId": "00Ex0000000abcdEAA",
+      "userType": "STANDARD",
+      "currencyISOCode": "USD",
+      "profilePhotoUrl": "https://example-dev-ed.file.force.com/profilephoto/005/F",
+      "profileThumbnailUrl": "https://example-dev-ed.file.force.com/profilephoto/005/T",
+      "siteUrl": null,
+      "siteUrlPrefix": null,
+      "networkId": null,
+      "accessibilityModeEnabled": false,
+      "isDefaultNetwork": true
+    },
+    "links": {
+      "loginUrl": "https://example-dev-ed.my.salesforce.com",
+      "enterpriseUrl": "/services/Soap/c/68.0/00Dx0000000abcd",
+      "metadataUrl": "/services/Soap/m/68.0/00Dx0000000abcd",
+      "partnerUrl": "/services/Soap/u/68.0/00Dx0000000abcd",
+      "restUrl": "/services/data/v68.0/",
+      "sobjectUrl": "/services/data/v68.0/sobjects/",
+      "searchUrl": "/services/data/v68.0/search/",
+      "queryUrl": "/services/data/v68.0/query/",
+      "recentItemsUrl": "/services/data/v68.0/recent/",
+      "chatterFeedsUrl": "/services/data/v31.0/chatter/feeds",
+      "chatterGroupsUrl": "/services/data/v68.0/chatter/groups",
+      "chatterUsersUrl": "/services/data/v68.0/chatter/users",
+      "chatterFeedItemsUrl": "/services/data/v31.0/chatter/feed-items",
+      "userUrl": "/005x00000012Q9PAAU"
+    },
+    "application": {
+      "name": "Spring Salesforce Quickstart",
+      "canvasUrl": "http://localhost:8080/canvas",
+      "applicationId": "0xIx0000000abcd",
+      "version": null,
+      "authType": "SIGNED_REQUEST",
+      "referenceId": "0xIx0000000abcd",
+      "options": [],
+      "samlInitiationMethod": "None",
+      "isInstalledPersonalApp": false,
+      "namespace": "",
+      "developerName": "Spring_Salesforce_Quickstart"
+    },
+    "organization": {
+      "organizationId": "00Dx0000000abcdEAA",
+      "name": "Example Org",
+      "multicurrencyEnabled": false,
+      "namespacePrefix": null,
+      "currencyIsoCode": "USD"
+    },
+    "environment": {
+      "referer": null,
+      "locationUrl": "https://example-dev-ed.lightning.force.com/lightning/r/Account/001x0000000abcdAAA/view",
+      "displayLocation": "Aura",
+      "sublocation": null,
+      "uiTheme": "Theme3",
+      "dimensions": {
+        "width": "1000px",
+        "height": "450px",
+        "maxWidth": "1000px",
+        "maxHeight": "2000px",
+        "clientWidth": "1020px",
+        "clientHeight": "626px"
+      },
+      "parameters": {
+        "recordId": "001x0000000abcdAAA",
+        "type": "Account"
+      },
+      "record": {},
+      "version": {
+        "season": "WINTER",
+        "api": "68.0"
+      }
+    }
+  }
+}
